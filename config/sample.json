@@ -1,0 +1,15 @@
+{
+  "mode": "custom",
+  "algorithm": "DeBruijn",
+  "remove_isolated_nodes": true,
+  "minimize": true,
+  "alphabet_size": 3,
+  "period": 2,
+  "forbidden_word_length": 5,
+  "forbidden_list": [{ "word": "01210", "position": 0 }],
+  "forbidden_per_position": [1, 0],
+  "output": {
+    "formats": ["edges", "matrix", "dot"],
+    "directory": "results/"
+  }
+}
