@@ -24,5 +24,4 @@ private:
     // ヘルパー関数
     void generateNodes(unsigned int wordLength, unsigned int period); // ノード生成のヘルパー関数
     void generateEdges(); // エッジ生成のヘルパー関数
-    std::vector<std::string> generateCombinations(unsigned int wordLength) const;
 };

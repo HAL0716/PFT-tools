@@ -1,4 +1,5 @@
 #include "Beal.hpp"
+#include "../utils/NodeUtils.hpp"
 #include <algorithm>
 
 std::vector<Node> Beal::generateNodes(const std::vector<Node>& forbiddenNodes) const {
@@ -33,7 +34,7 @@ Graph Beal::generate(const std::vector<Node>& forbiddenNodes) const {
         graph.addNode(node);
 
         // 禁止ノードはスキップ
-        if (std::find(forbiddenNodes.begin(), forbiddenNodes.end(), node) != forbiddenNodes.end()) {
+        if (containsNode(forbiddenNodes, node)) {
             continue;
         }
 
@@ -46,7 +47,7 @@ Graph Beal::generate(const std::vector<Node>& forbiddenNodes) const {
             // 次ノードを探索
             auto findNextNode = [&](const std::string& prefix, unsigned int phaseOffset) -> std::pair<bool, Node> {
                 Node candidate(prefix, (phase + phaseOffset) % period);
-                if (std::find(nodes.begin(), nodes.end(), candidate) != nodes.end()) {
+                if (containsNode(nodes, candidate)) {
                     return {true, candidate};
                 }
                 return {false, Node()};
