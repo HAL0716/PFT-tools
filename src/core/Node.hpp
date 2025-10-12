@@ -6,6 +6,9 @@
 
 class Node {
 public:
+    // デフォルトコンストラクタ
+    Node() : label(""), phase(0) {}
+
     // コンストラクタ
     Node(const std::string& label, unsigned int phase = 0);
 
