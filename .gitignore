@@ -39,3 +39,22 @@
 
 # debug information files
 *.dwo
+
+# VSCode関連の設定ファイル
+.vscode/
+
+# ワークスペースのバックアップファイル
+*.code-workspace
+
+# VSCodeのデバッグやタスク実行時に生成されるファイル
+.vscode-test/
+
+# ビルド用フォルダ
+build/
+
+# config内のsample.json以外のファイル
+config/*
+!config/sample.json
+
+#resultsフォルダ
+results/
