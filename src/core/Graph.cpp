@@ -19,3 +19,12 @@ const std::vector<Node>& Graph::getNodes() const {
 const std::vector<Edge>& Graph::getEdges() const {
     return edges;
 }
+
+// 隣接リストを生成
+std::unordered_map<Node, std::unordered_map<std::string, Node>> Graph::genAdjacencyList() const {
+    std::unordered_map<Node, std::unordered_map<std::string, Node>> adjList;
+    for (const auto& edge : edges) {
+        adjList[edge.getSource()][edge.getLabel()] = edge.getTarget();
+    }
+    return adjList;
+}

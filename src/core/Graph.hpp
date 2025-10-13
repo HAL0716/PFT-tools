@@ -18,6 +18,9 @@ public:
     // エッジリストを取得
     const std::vector<Edge>& getEdges() const;
 
+    // 隣接リストを生成
+    std::unordered_map<Node, std::unordered_map<std::string, Node>> genAdjacencyList() const;
+
 private:
     std::vector<Node> nodes; // ノードリスト
     std::vector<Edge> edges; // エッジリスト
