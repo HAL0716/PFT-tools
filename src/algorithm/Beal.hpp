@@ -3,9 +3,10 @@
 #include "../core/Node.hpp"
 #include "../core/Graph.hpp"
 #include "../core/constants.hpp"
+#include "GraphGenerator.hpp"
 #include <vector>
 
-class Beal {
+class Beal : public GraphGenerator {
 public:
     // コンストラクタ
     Beal(unsigned int alphabetSize, unsigned int period, unsigned int wordLength = 0);

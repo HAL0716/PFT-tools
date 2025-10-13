@@ -3,11 +3,12 @@
 #include "../core/Node.hpp"
 #include "../core/Graph.hpp"
 #include "../core/constants.hpp"
+#include "GraphGenerator.hpp"
 #include <vector>
 #include <unordered_map>
 #include <functional>
 
-class DeBruijn {
+class DeBruijn : public GraphGenerator {
 public:
     // コンストラクタ
     DeBruijn(unsigned int alphabetSize, unsigned int period, unsigned int wordLength);
