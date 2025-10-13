@@ -22,7 +22,7 @@ std::vector<Node> Beal::generateNodes(const std::vector<Node>& forbiddenNodes) c
     return nodes;
 }
 
-Beal::Beal(unsigned int alphabetSize, unsigned int period) : period(period) {
+Beal::Beal(unsigned int alphabetSize, unsigned int period, unsigned int wordLength) : period(period) {
     alphabet = ALPHABET.substr(0, alphabetSize);
 }
 

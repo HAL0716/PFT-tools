@@ -35,7 +35,7 @@ void DeBruijn::generateEdges() {
 }
 
 // コンストラクタ
-DeBruijn::DeBruijn(unsigned int alphabetSize, unsigned int wordLength, unsigned int period) : period(period) {
+DeBruijn::DeBruijn(unsigned int alphabetSize, unsigned int period, unsigned int wordLength) : period(period) {
     alphabet = ALPHABET.substr(0, alphabetSize);
     generateNodes(wordLength, period);
     generateEdges();

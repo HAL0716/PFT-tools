@@ -8,7 +8,7 @@
 class Beal {
 public:
     // コンストラクタ
-    Beal(unsigned int alphabetSize, unsigned int period);
+    Beal(unsigned int alphabetSize, unsigned int period, unsigned int wordLength = 0);
 
     // グラフ生成
     Graph generate(const std::vector<Node>& forbiddenNodes)  const;

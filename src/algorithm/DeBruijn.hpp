@@ -10,7 +10,7 @@
 class DeBruijn {
 public:
     // コンストラクタ
-    DeBruijn(unsigned int alphabetSize, unsigned int wordLength, unsigned int period);
+    DeBruijn(unsigned int alphabetSize, unsigned int period, unsigned int wordLength);
 
     // グラフ生成
     Graph generate(const std::vector<Node>& forbiddenNodes)  const;
