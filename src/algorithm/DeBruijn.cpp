@@ -3,13 +3,13 @@
 #include "../core/Node.hpp"
 #include "../core/Graph.hpp"
 #include "../utils/NodeUtils.hpp"
-#include "../utils/StringUtils.hpp"
+#include "../utils/CombinationUtils.hpp"
 #include <unordered_set>
 
 // ノード生成の更新
 void DeBruijn::generateNodes(unsigned int wordLength, unsigned int period) {
     nodes.clear();
-    auto combinations = generateCombinations(alphabet, wordLength);
+    auto combinations = combine(alphabet, wordLength, true);
 
     for (const auto& combination : combinations) {
         for (unsigned int phase = 0; phase < period; ++phase) {
