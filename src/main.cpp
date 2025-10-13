@@ -1,61 +1,154 @@
 #include <iostream>
+#include <memory> // std::unique_ptr
+#include <map> // std::map
 #include "algorithm/Beal.hpp"
 #include "algorithm/DeBruijn.hpp"
+#include "core/constants.hpp"
 #include "core/Node.hpp"
 #include "io/input.hpp"
 #include "io/output.hpp"
+#include "utils/CombinationUtils.hpp"
 
 using json = nlohmann::json;
 
-void generateGraph(const json& config) {
-    unsigned int alphabetSize = config.value("alphabet_size", 0);
-    unsigned int wordLength = config.value("forbidden_word_length", 0);
-    unsigned int period = config.value("period", 0);
-    std::string algorithm = config.value("algorithm", "");
-
-    if (alphabetSize < 2 || wordLength < 1 || period < 1) {
-        std::cerr << "Error: Invalid config values." << std::endl;
-        return;
-    }
-
-    auto forbiddenNodes = parseForbiddenNodes(config);
-    Graph graph;
-
-    if (algorithm == "Beal") {
-        Beal generator(alphabetSize, period);
-        graph = generator.generate(forbiddenNodes);
-    } else if (algorithm == "DeBruijn") {
-        DeBruijn generator(alphabetSize, wordLength, period);
-        graph = generator.generate(forbiddenNodes);
-    } else {
-        std::cerr << "Error: Unknown algorithm '" << algorithm << "'." << std::endl;
-        return;
-    }
-
-    for (const auto& edge : graph.getEdges()) {
-        std::cout << edge << std::endl;
-    }
-
-    std::cout << "Total: " << graph.getEdges().size() << " edges." << std::endl;
+// エラーメッセージを一元管理
+void printErrorAndExit(const std::string& message) {
+    std::cerr << "Error: " << message << std::endl;
+    exit(1);
 }
 
-void printUsage(const char* progName) {
-    std::cerr << "Usage: " << progName << " generate --config <config_path>" << std::endl;
+// 動的にGraphGeneratorの派生クラスを生成するファクトリ関数
+std::unique_ptr<GraphGenerator> createGraphGenerator(const std::string& algorithm, unsigned int alphabetSize, unsigned int period, unsigned int wordLength) {
+    static const std::map<std::string, std::function<std::unique_ptr<GraphGenerator>()>> generatorMap = {
+        {"Beal", [=]() { return std::make_unique<Beal>(alphabetSize, period, wordLength); }},
+        {"DeBruijn", [=]() { return std::make_unique<DeBruijn>(alphabetSize, period, wordLength); }}
+    };
+
+    auto it = generatorMap.find(algorithm);
+    if (it != generatorMap.end()) {
+        return it->second();
+    } else {
+        throw std::invalid_argument("Unknown algorithm: " + algorithm);
+    }
+}
+
+// forbiddenNodesListを生成する関数
+std::vector<std::vector<std::vector<Node>>> generateForbiddenNodesList(const std::vector<std::string>& words, const std::vector<unsigned int>& forbiddenPerPosition, unsigned int period) {
+    std::vector<std::vector<std::vector<Node>>> forbiddenNodesList;
+
+    for (int i = 0; i < period; ++i) {
+        unsigned int n = forbiddenPerPosition[i];
+        if (n > words.size()) {
+            printErrorAndExit("forbidden_per_position value exceeds total combinations.");
+        }
+
+        std::vector<Node> forbiddenNodes;
+        for (const auto& w : words) {
+            forbiddenNodes.emplace_back(w, i);
+        }
+
+        forbiddenNodesList.push_back(combine(forbiddenNodes, n, false));
+    }
+
+    return forbiddenNodesList;
+}
+
+// DFSを用いて禁止ノードを組み合わせる関数
+std::vector<std::vector<Node>> combineForbiddenNodes(const std::vector<std::vector<std::vector<Node>>>& forbiddenNodesList) {
+    std::vector<std::vector<Node>> combinedNodes;
+    std::function<void(int, std::vector<Node>)> dfs = [&](int depth, std::vector<Node> current) {
+        if (depth == forbiddenNodesList.size()) {
+            combinedNodes.push_back(current);
+            return;
+        }
+        for (const auto& nodes : forbiddenNodesList[depth]) {
+            auto next = current;
+            next.insert(next.end(), nodes.begin(), nodes.end());
+            dfs(depth + 1, next);
+        }
+    };
+    dfs(0, {});
+    return combinedNodes;
+}
+
+// 禁止ノードの生成ロジックを分離
+std::vector<std::vector<Node>> generateForbiddenNodes(const json& config, const std::string& mode, unsigned int alphabetSize, unsigned int wordLength, unsigned int period) {
+    if (mode == "custom") {
+        // Customモードの禁止ノード生成
+        std::vector<Node> forbiddenNodes;
+        if (!config.contains("forbidden_list")) {
+            printErrorAndExit("forbidden_list is missing.");
+        }
+
+        for (const auto& forbidden : config["forbidden_list"]) {
+            if (forbidden.contains("word") && forbidden.contains("position")) {
+                forbiddenNodes.emplace_back(forbidden["word"], forbidden["position"]);
+            }
+        }
+        return {forbiddenNodes};
+    } else if (mode == "all-patterns") {
+        // all-patternsモードの禁止ノード生成
+        if (!config.contains("forbidden_per_position")) {
+            printErrorAndExit("forbidden_per_position is missing.");
+        }
+
+        auto forbiddenPerPosition = config.value("forbidden_per_position", std::vector<unsigned int>());
+        if (forbiddenPerPosition.size() != period) {
+            printErrorAndExit("forbidden_per_position size must match the period.");
+        }
+
+        auto words = combine(ALPHABET.substr(0, alphabetSize), wordLength, true);
+        auto forbiddenNodesList = generateForbiddenNodesList(words, forbiddenPerPosition, period);
+
+        return combineForbiddenNodes(forbiddenNodesList);
+    } else {
+        printErrorAndExit("Unknown mode '" + mode + "'.");
+    }
+    return {};
 }
 
 int main(int argc, char* argv[]) {
     if (argc != 4 || std::string(argv[1]) != "generate" || std::string(argv[2]) != "--config") {
-        printUsage(argv[0]);
+        std::cerr << "Usage: " << argv[0] << " generate --config <config_path>" << std::endl;
         return 1;
     }
 
     json config;
     if (!loadConfig(argv[3], config)) {
-        std::cerr << "Error: Failed to load config." << std::endl;
-        return 1;
+        printErrorAndExit("Failed to load config.");
     }
 
-    generateGraph(config);
+    std::string mode = config.value("mode", "");
+    unsigned int alphabetSize = config.value("alphabet_size", 0);
+    unsigned int wordLength = config.value("forbidden_word_length", 0);
+    unsigned int period = config.value("period", 0);
+    std::string algorithm = config.value("algorithm", "");
+
+    auto forbiddenNodes = generateForbiddenNodes(config, mode, alphabetSize, wordLength, period);
+
+    try {
+        // 動的にグラフ生成クラスを作成
+        std::unique_ptr<GraphGenerator> generator = createGraphGenerator(algorithm, alphabetSize, period, wordLength);
+
+        // 禁止ノードの組み合わせごとにグラフを生成
+        for (const auto& forbiddenCombinations : forbiddenNodes) {
+            Graph graph = generator->generate(forbiddenCombinations);
+
+            // 禁止ノードとエッジ数を出力
+            for (const auto& forbiddenNode : forbiddenCombinations) {
+                std::cout << forbiddenNode << ", ";
+            }
+            std::cout << graph.getEdges().size() << " edges." << std::endl;
+            // // エッジを出力
+            // for (const auto& edge : graph.getEdges()) {
+            //     std::cout << edge << std::endl;
+            // }
+            // std::cout << std::endl << std::endl;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
 
     return 0;
 }
