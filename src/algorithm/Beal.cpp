@@ -13,11 +13,16 @@ std::vector<Node> Beal::generateNodes(const std::vector<Node>& forbiddenNodes) c
         for (size_t len = 1; len <= label.size(); ++len) {
             nodes.emplace_back(label.substr(0, len), phase);
         }
-        // 空系列ノードを追加
-        for (size_t p = 0; p < period; ++p) {
-            nodes.emplace_back("E", p);
-        }
     }
+
+    // 空系列ノードを追加
+    for (size_t p = 0; p < period; ++p) {
+        nodes.emplace_back("E", p);
+    }
+
+    // 重複を削除
+    std::sort(nodes.begin(), nodes.end());
+    nodes.erase(std::unique(nodes.begin(), nodes.end()), nodes.end());
 
     return nodes;
 }
