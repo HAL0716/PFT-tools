@@ -1,11 +1,12 @@
 #include <filesystem>
+#include <fstream>
+#include <iostream>
 #include <sstream>
 
+#include "core/Graph.hpp"
 #include "formatter.hpp"
 #include "input/Config.hpp"
-#include "input/loader.hpp"
 #include "nlohmann/json.hpp"
-#include "writer.hpp"
 
 using json = nlohmann::json;
 
@@ -24,14 +25,13 @@ std::string genOutputPath(const Config& config) {
                  << config.forbidden_word_length.value_or(0);
 
         if (config.forbidden_per_position) {
-            basePath << "-(";
+            basePath << ":";
             const auto& forbiddenCounts = config.forbidden_per_position.value();
             for (size_t i = 0; i < forbiddenCounts.size(); ++i) {
                 if (i > 0)
                     basePath << "-";
                 basePath << forbiddenCounts[i];
             }
-            basePath << ")";
         }
     } else {
         basePath << config.mode;
@@ -40,20 +40,61 @@ std::string genOutputPath(const Config& config) {
     return basePath.str();
 }
 
-void saveEdges(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
-               const std::vector<Edge>& edges) {
-    // フォーマット処理
-    std::string formattedEdges = formatter::edges(edges);
+namespace output_helpers {
 
-    // 保存処理
-    writer::edges(baseDirectory, forbiddenNodes, edges);
+std::string generateFilePath(const std::string& baseDirectory,
+                             const std::vector<Node>& forbiddenNodes,
+                             const std::string& subDirectory) {
+    std::string dirPath = baseDirectory + "/" + subDirectory + "/";
+    if (!std::filesystem::exists(dirPath)) {
+        std::filesystem::create_directories(dirPath);
+        std::cout << "Created directory: " << dirPath << std::endl;
+    }
+
+    std::ostringstream oss;
+    oss << dirPath;
+    for (size_t i = 0; i < forbiddenNodes.size(); ++i) {
+        if (i > 0)
+            oss << "-";
+        oss << forbiddenNodes[i];
+    }
+    oss << ".csv";
+
+    return oss.str();
+}
+
+}  // namespace output_helpers
+
+void saveEdges(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
+               const Graph& graph) {
+    using namespace output_helpers;
+
+    std::string filePath = generateFilePath(baseDirectory, forbiddenNodes, "edges");
+
+    std::string csvData = formatEdgesCSV(graph);
+
+    std::ofstream outFile(filePath);
+    if (!outFile) {
+        throw std::ios_base::failure("Failed to open file for writing: " + filePath);
+    }
+    outFile << csvData;
+    outFile.close();
+    std::cout << "Saved file: " << filePath << std::endl;
 }
 
 void saveAdjacencyMatrix(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
-                         const std::vector<Node>& nodes, const std::vector<Edge>& edges) {
-    // フォーマット処理
-    std::string formattedMatrix = formatter::adjacencyMatrix(nodes, edges);
+                         const Graph& graph) {
+    using namespace output_helpers;
 
-    // 保存処理
-    writer::adjacencyMatrix(baseDirectory, forbiddenNodes, nodes, edges);
+    std::string filePath = generateFilePath(baseDirectory, forbiddenNodes, "adjacency_matrix");
+
+    std::string csvData = formatAdjacencyMatrixCSV(graph);
+
+    std::ofstream outFile(filePath);
+    if (!outFile) {
+        throw std::ios_base::failure("Failed to open file for writing: " + filePath);
+    }
+    outFile << csvData;
+    outFile.close();
+    std::cout << "Saved file: " << filePath << std::endl;
 }

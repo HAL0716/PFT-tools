@@ -1,43 +1,72 @@
 #include "formatter.hpp"
 
+#include <filesystem>
+#include <iostream>
 #include <sstream>
-#include <unordered_map>
 
 namespace formatter {
 
-std::string edges(const std::vector<Edge>& edges) {
-    std::ostringstream oss;
-    oss << "Source,Target,Label\n";
-    for (const auto& edge : edges) {
-        oss << edge.getSource() << "," << edge.getTarget() << "," << edge.getLabel() << "\n";
+std::string generateFilePath(const std::string& baseDirectory,
+                             const std::vector<Node>& forbiddenNodes,
+                             const std::string& subDirectory) {
+    std::string dirPath = baseDirectory + "/" + subDirectory + "/";
+    if (!std::filesystem::exists(dirPath)) {
+        std::filesystem::create_directories(dirPath);
+        std::cout << "Created directory: " << dirPath << std::endl;
     }
+
+    std::ostringstream oss;
+    oss << dirPath;
+    for (size_t i = 0; i < forbiddenNodes.size(); ++i) {
+        if (i > 0)
+            oss << "-";
+        oss << forbiddenNodes[i];
+    }
+    oss << ".csv";
+
     return oss.str();
 }
 
-std::string adjacencyMatrix(const std::vector<Node>& nodes, const std::vector<Edge>& edges) {
-    size_t n = nodes.size();
+std::string formatEdgesCSV(const Graph& graph) {
+    auto nodes = graph.getNodes();
     std::unordered_map<Node, size_t> toIdx;
-    for (size_t i = 0; i < n; ++i) {
+    for (size_t i = 0; i < nodes.size(); ++i) {
         toIdx[nodes[i]] = i;
     }
 
-    std::vector<std::vector<int>> adjMatrix(n, std::vector<int>(n, 0));
-    for (const auto& edge : edges) {
-        size_t srcIdx = toIdx[edge.getSource()];
-        size_t tgtIdx = toIdx[edge.getTarget()];
+    std::ostringstream csvData;
+    for (const auto& edge : graph.getEdges()) {
+        size_t srcIdx = toIdx.at(edge.getSource());
+        size_t tgtIdx = toIdx.at(edge.getTarget());
+        csvData << srcIdx << "," << tgtIdx << "," << edge.getLabel() << "\n";
+    }
+    return csvData.str();
+}
+
+std::string formatAdjacencyMatrixCSV(const Graph& graph) {
+    auto nodes = graph.getNodes();
+    std::unordered_map<Node, size_t> toIdx;
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        toIdx[nodes[i]] = i;
+    }
+
+    std::vector<std::vector<int>> adjMatrix(nodes.size(), std::vector<int>(nodes.size(), 0));
+    for (const auto& edge : graph.getEdges()) {
+        size_t srcIdx = toIdx.at(edge.getSource());
+        size_t tgtIdx = toIdx.at(edge.getTarget());
         adjMatrix[srcIdx][tgtIdx] += 1;
     }
 
-    std::ostringstream oss;
-    for (size_t i = 0; i < n; ++i) {
-        for (size_t j = 0; j < n; ++j) {
+    std::ostringstream csvData;
+    for (const auto& row : adjMatrix) {
+        for (size_t j = 0; j < row.size(); ++j) {
             if (j > 0)
-                oss << ",";
-            oss << adjMatrix[i][j];
+                csvData << ",";
+            csvData << row[j];
         }
-        oss << "\n";
+        csvData << "\n";
     }
-    return oss.str();
+    return csvData.str();
 }
 
 }  // namespace formatter

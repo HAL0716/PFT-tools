@@ -3,13 +3,17 @@
 #include <string>
 #include <vector>
 
-#include "core/Edge.hpp"
+#include "core/Graph.hpp"
 #include "core/Node.hpp"
 
-namespace formatter {
-// EdgesをCSV形式の文字列に変換する関数
-std::string edges(const std::vector<Edge>& edges);
+namespace output_helpers {
 
-// 隣接行列をCSV形式の文字列に変換する関数
-std::string adjacencyMatrix(const std::vector<Node>& nodes, const std::vector<Edge>& edges);
-}  // namespace formatter
+std::string generateFilePath(const std::string& baseDirectory,
+                             const std::vector<Node>& forbiddenNodes,
+                             const std::string& subDirectory);
+
+std::string formatEdgesCSV(const Graph& graph);
+
+std::string formatAdjacencyMatrixCSV(const Graph& graph);
+
+}  // namespace output_helpers
