@@ -2,10 +2,11 @@
 
 #include <nlohmann/json.hpp>
 #include <vector>
-#include <fstream>
+#include <string>
 #include "core/Graph.hpp"
+#include "Config.hpp"
 
-bool loadConfig(const std::string& configPath, nlohmann::json& config);
+bool loadConfig(const std::string& filePath, Config& config);
 
 bool loadEdges(const std::string& filePath, Graph& graph);
 

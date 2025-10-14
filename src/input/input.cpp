@@ -4,8 +4,21 @@
 #include "core/Edge.hpp"
 #include "core/Node.hpp"
 
-bool loadConfig(const std::string& configPath, nlohmann::json& config) {
-    return loader::json(configPath, config);
+bool loadConfig(const std::string& filePath, Config& config) {
+    nlohmann::json jsonConfig;
+    if (!loader::json(filePath, jsonConfig)) {
+        return false;
+    }
+
+    try {
+        config = jsonConfig.get<Config>();
+        config.validate();
+    } catch (const std::exception& e) {
+        std::cerr << "Error: Invalid config: " << e.what() << std::endl;
+        return false;
+    }
+
+    return true;
 }
 
 bool loadEdges(const std::string& filePath, Graph& graph) {
@@ -19,6 +32,7 @@ bool loadEdges(const std::string& filePath, Graph& graph) {
             std::cerr << "Error: Invalid edge data format in file: " << filePath << std::endl;
             return false;
         }
+        
         Node source(row[0]);
         Node target(row[1]);
         graph.addEdge(Edge(source, target));
@@ -34,12 +48,17 @@ bool loadAdjacencyMatrix(const std::string& filePath, Graph& graph) {
     }
 
     for (size_t i = 0; i < csvData.size(); ++i) {
+        if (csvData[i].size() != csvData.size()) {
+            std::cerr << "Error: Adjacency matrix must be square in file: " << filePath << std::endl;
+            return false;
+        }
+
         Node source(std::to_string(i));
         graph.addNode(source);
         for (size_t j = 0; j < csvData[i].size(); ++j) {
-            if (csvData[i][j] == "1") {
+            for (size_t n = 0; n < std::stoi(csvData[i][j]); ++n) {
                 Node target(std::to_string(j));
-                graph.addEdge(Edge(source, target));
+                graph.addEdge(Edge(source, target, std::to_string(n)));
             }
         }
     }
