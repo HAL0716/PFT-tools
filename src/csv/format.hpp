@@ -6,14 +6,14 @@
 #include "core/Graph.hpp"
 #include "core/Node.hpp"
 
-namespace output_helpers {
+namespace format {
 
 std::string generateFilePath(const std::string& baseDirectory,
                              const std::vector<Node>& forbiddenNodes,
                              const std::string& subDirectory);
 
-std::string formatEdgesCSV(const Graph& graph);
+std::string edges(const Graph& graph);
 
-std::string formatAdjacencyMatrixCSV(const Graph& graph);
+std::string adjacencyMatrix(const Graph& graph);
 
-}  // namespace output_helpers
+}  // namespace format

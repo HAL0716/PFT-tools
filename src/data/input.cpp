@@ -4,11 +4,12 @@
 
 #include "core/Edge.hpp"
 #include "core/Node.hpp"
-#include "loader.hpp"
+#include "csv/csv.hpp"
+#include "json/json.hpp"
 
 bool loadConfig(const std::string& filePath, Config& config) {
     nlohmann::json jsonConfig;
-    if (!loader::json(filePath, jsonConfig)) {
+    if (!json::read(filePath, jsonConfig)) {
         return false;
     }
 
@@ -25,19 +26,20 @@ bool loadConfig(const std::string& filePath, Config& config) {
 
 bool loadEdges(const std::string& filePath, Graph& graph) {
     std::vector<std::vector<std::string>> csvData;
-    if (!loader::csv(filePath, csvData)) {
+    if (!csv::read(filePath, csvData)) {
         return false;
     }
 
     for (const auto& row : csvData) {
-        if (row.size() < 2) {
+        if (row.size() < 3) {
             std::cerr << "Error: Invalid edge data format in file: " << filePath << std::endl;
             return false;
         }
 
         Node source(row[0]);
         Node target(row[1]);
-        graph.addEdge(Edge(source, target));
+        std::string label = row[2];
+        graph.addEdge(Edge(source, target, label));
     }
 
     return true;
@@ -45,7 +47,7 @@ bool loadEdges(const std::string& filePath, Graph& graph) {
 
 bool loadAdjacencyMatrix(const std::string& filePath, Graph& graph) {
     std::vector<std::vector<std::string>> csvData;
-    if (!loader::csv(filePath, csvData)) {
+    if (!csv::read(filePath, csvData)) {
         return false;
     }
 

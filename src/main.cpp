@@ -10,9 +10,10 @@
 #include "core/Graph.hpp"
 #include "core/Node.hpp"
 #include "core/constants.hpp"
-#include "input/input.hpp"
-#include "input/loader.hpp"
-#include "output/output.hpp"
+#include "data/input.hpp"
+#include "data/output.hpp"
+#include "json/Config.hpp"
+#include "path/PathUtils.hpp"
 #include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
 
@@ -24,21 +25,26 @@ void printErrorAndExit(const std::string& message) {
     exit(1);
 }
 
-// 動的にGraphGeneratorの派生クラスを生成するファクトリ関数
-std::unique_ptr<GraphGenerator> createGraphGenerator(const std::string& algorithm,
-                                                     unsigned int alphabetSize, unsigned int period,
-                                                     unsigned int wordLength) {
-    static const std::map<std::string, std::function<std::unique_ptr<GraphGenerator>()>>
-        generatorMap = {
-            {"Beal", [=]() { return std::make_unique<Beal>(alphabetSize, period, wordLength); }},
-            {"DeBruijn",
-             [=]() { return std::make_unique<DeBruijn>(alphabetSize, period, wordLength); }}};
+// GraphGeneratorを生成する関数マップ
+static const std::map<std::string, std::function<std::unique_ptr<GraphGenerator>(const Config&)>>
+    generatorMap = {{"Beal",
+                     [](const Config& config) {
+                         return std::make_unique<Beal>(config.alphabet_size, config.period,
+                                                       config.forbidden_word_length.value_or(0));
+                     }},
+                    {"DeBruijn", [](const Config& config) {
+                         return std::make_unique<DeBruijn>(config.alphabet_size, config.period,
+                                                           config.forbidden_word_length.value());
+                     }}};
 
-    auto it = generatorMap.find(algorithm);
+// 動的にGraphGeneratorの派生クラスを生成するファクトリ関数
+std::unique_ptr<GraphGenerator> createGraphGenerator(const Config& config) {
+    auto it = generatorMap.find(config.algorithm);
+
     if (it != generatorMap.end()) {
-        return it->second();
+        return it->second(config);
     } else {
-        throw std::invalid_argument("Unknown algorithm: " + algorithm);
+        throw std::invalid_argument("Unknown algorithm: " + config.algorithm);
     }
 }
 
@@ -85,98 +91,65 @@ std::vector<std::vector<Node>> combineForbiddenNodes(
 }
 
 // 禁止ノードの生成ロジックを分離
-std::vector<std::vector<Node>> generateForbiddenNodes(const json& config, const std::string& mode,
-                                                      unsigned int alphabetSize,
-                                                      unsigned int wordLength,
-                                                      unsigned int period) {
-    if (mode == "custom") {
+std::vector<std::vector<Node>> generateForbiddenNodes(const Config& config) {
+    if (config.mode == "custom") {
         // Customモードの禁止ノード生成
         std::vector<Node> forbiddenNodes;
-        for (const auto& forbidden : config["forbidden_words"]) {
-            if (forbidden.size() != 2) {
-                printErrorAndExit("Each entry in forbidden_list must have 'word' and 'position'.");
-            }
-            forbiddenNodes.emplace_back(forbidden[0], forbidden[1]);
+        for (const auto& forbidden : config.forbidden_words.value()) {
+            forbiddenNodes.emplace_back(forbidden.first, forbidden.second);
         }
         if (forbiddenNodes.empty()) {
             printErrorAndExit("forbidden_words is empty.");
         }
         return {forbiddenNodes};
-    } else if (mode == "all-patterns") {
-        // all-patternsモードの禁止ノード生成
-        if (!config.contains("forbidden_per_position")) {
-            printErrorAndExit("forbidden_per_position is missing.");
-        }
-
-        auto forbiddenPerPosition =
-            config.value("forbidden_per_position", std::vector<unsigned int>());
-        if (forbiddenPerPosition.size() != period) {
-            printErrorAndExit("forbidden_per_position size must match the period.");
-        }
-
-        auto words = combine(ALPHABET.substr(0, alphabetSize), wordLength, true);
-        auto forbiddenNodesList = generateForbiddenNodesList(words, forbiddenPerPosition, period);
+    } else if (config.mode == "all-patterns") {
+        auto words = combine(ALPHABET.substr(0, config.alphabet_size),
+                             config.forbidden_word_length.value(), true);
+        auto forbiddenNodesList =
+            generateForbiddenNodesList(words, config.forbidden_per_position.value(), config.period);
 
         return combineForbiddenNodes(forbiddenNodesList);
     } else {
-        printErrorAndExit("Unknown mode '" + mode + "'.");
+        printErrorAndExit("Unknown mode '" + config.mode + "'.");
     }
     return {};
 }
 
 // JSON設定からグラフを生成する関数
 void generateGraphFromJson(const std::string& configPath) {
-    std::cout << "Generating graph from JSON config: " << configPath << std::endl;
-
-    json config;
+    Config config;
     if (!loadConfig(configPath, config)) {
         printErrorAndExit("Failed to load config.");
     }
 
-    std::string mode = config.value("mode", "");
-    unsigned int alphabetSize = config.value("alphabet_size", 0);
-    unsigned int wordLength = config.value("forbidden_word_length", 0);
-    unsigned int period = config.value("period", 0);
-    std::string algorithm = config.value("algorithm", "");
-    bool sinkLess = config.value("sink_less", false);
-    bool minimize = config.value("minimize", false);
+    auto forbiddenNodes = generateForbiddenNodes(config);
 
-    auto forbiddenNodes = generateForbiddenNodes(config, mode, alphabetSize, wordLength, period);
+    std::string baseDirectory = path::genDirPath(config);
 
-    std::string baseDirectory = genOutputPath(config);
+    std::unique_ptr<GraphGenerator> generator = createGraphGenerator(config);
 
     try {
-        // 動的にグラフ生成クラスを作成
-        std::unique_ptr<GraphGenerator> generator =
-            createGraphGenerator(algorithm, alphabetSize, period, wordLength);
-
         for (const auto& forbiddenCombinations : forbiddenNodes) {
             Graph graph = generator->generate(forbiddenCombinations);
 
-            if (sinkLess) {
+            if (config.sink_less) {
                 graph = cleanGraph(graph);
-                if (minimize) {
+                if (config.minimize) {
                     graph = Moore::apply(graph);
                 }
             }
 
-            std::cout << "Generated graph with " << graph.getNodes().size() << " nodes and "
-                      << graph.getEdges().size() << " edges." << std::endl;
-
-            for (const auto& format : config["output"]["formats"]) {
+            for (const auto& format : config.output.formats) {
                 if (format == "edges") {
-                    saveEdges(baseDirectory, forbiddenCombinations, graph.getEdges());
+                    saveEdges(baseDirectory, forbiddenCombinations, graph);
                 } else if (format == "matrix") {
-                    saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph.getNodes(),
-                                        graph.getEdges());
+                    saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph);
                 }
             }
         }
     } catch (const std::exception& e) {
         printErrorAndExit(e.what());
     }
-
-    std::cout << "Graph generation completed." << std::endl;
 }
 
 // ファイルパスから拡張子を取得する関数
@@ -218,7 +191,7 @@ int main(int argc, char* argv[]) {
         if (extension == ".csv") {
             csvFiles.push_back(configPath);
         } else if (extension.empty()) {
-            csvFiles = loader::getCsvFiles(configPath);
+            csvFiles = path::getCsvFiles(configPath);
             if (csvFiles.empty()) {
                 printErrorAndExit("No CSV files found in the specified directory.");
             }

@@ -1,10 +1,10 @@
-#include "formatter.hpp"
+#include "format.hpp"
 
 #include <filesystem>
 #include <iostream>
 #include <sstream>
 
-namespace formatter {
+namespace format {
 
 std::string generateFilePath(const std::string& baseDirectory,
                              const std::vector<Node>& forbiddenNodes,
@@ -27,7 +27,7 @@ std::string generateFilePath(const std::string& baseDirectory,
     return oss.str();
 }
 
-std::string formatEdgesCSV(const Graph& graph) {
+std::string edges(const Graph& graph) {
     auto nodes = graph.getNodes();
     std::unordered_map<Node, size_t> toIdx;
     for (size_t i = 0; i < nodes.size(); ++i) {
@@ -43,7 +43,7 @@ std::string formatEdgesCSV(const Graph& graph) {
     return csvData.str();
 }
 
-std::string formatAdjacencyMatrixCSV(const Graph& graph) {
+std::string adjacencyMatrix(const Graph& graph) {
     auto nodes = graph.getNodes();
     std::unordered_map<Node, size_t> toIdx;
     for (size_t i = 0; i < nodes.size(); ++i) {
