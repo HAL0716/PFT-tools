@@ -11,11 +11,13 @@ namespace Moore {
         initIDs(adjList, toNodes, toId);
 
         std::unordered_map<std::string, std::unordered_set<Node>> toNewNodes;
+        std::unordered_map<Node, std::string> toNewId;
         do {
             toNewNodes.clear();
-            updateIDs(adjList, toNodes, toId, toNewNodes);
+            updateIDs(adjList, toNodes, toId, toNewNodes, toNewId);
 
             toNodes.swap(toNewNodes);
+            toId.swap(toNewId);
         } while (toNewNodes.size() != toNodes.size());
 
         // ノードマッピング作成
@@ -61,8 +63,8 @@ namespace Moore {
 
         void updateIDs(
             const std::unordered_map<Node, std::unordered_map<std::string, Node>>& adjList,
-            const std::unordered_map<std::string, std::unordered_set<Node>>& toNodes, std::unordered_map<Node, std::string>& toId,
-            std::unordered_map<std::string, std::unordered_set<Node>>& toNewNodes
+            const std::unordered_map<std::string, std::unordered_set<Node>>& toNodes, const std::unordered_map<Node, std::string>& toId,
+            std::unordered_map<std::string, std::unordered_set<Node>>& toNewNodes, std::unordered_map<Node, std::string>& toNewId
         ) {
             for (const auto& [id, nodes] : toNodes) {
                 if (nodes.size() == 1) {
@@ -79,7 +81,7 @@ namespace Moore {
                         newId += std::accumulate(ids.begin(), ids.end(), newId);
 
                         toNewNodes[newId].emplace(src);
-                        toId[src] = newId;
+                        toNewId[src] = newId;
                     }
                 }
             }

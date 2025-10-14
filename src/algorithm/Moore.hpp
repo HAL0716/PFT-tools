@@ -16,7 +16,7 @@ namespace Moore {
             std::unordered_map<std::string, std::unordered_set<Node>>& toNodes, std::unordered_map<Node, std::string>& toId);
         void updateIDs(
             const std::unordered_map<Node, std::unordered_map<std::string, Node>>& adjList,
-            const std::unordered_map<std::string, std::unordered_set<Node>>& toNodes, std::unordered_map<Node, std::string>& toId,
-            std::unordered_map<std::string, std::unordered_set<Node>>& toNewNodes);
+            const std::unordered_map<std::string, std::unordered_set<Node>>& toNodes, const std::unordered_map<Node, std::string>& toId,
+            std::unordered_map<std::string, std::unordered_set<Node>>& toNewNodes, std::unordered_map<Node, std::string>& toNewId);
     }
 };
