@@ -126,24 +126,16 @@ int main(int argc, char* argv[]) {
 
     auto forbiddenNodes = generateForbiddenNodes(config, mode, alphabetSize, wordLength, period);
 
+    std::string baseDirectory = genOutputPath(config);
+
     try {
         // 動的にグラフ生成クラスを作成
         std::unique_ptr<GraphGenerator> generator = createGraphGenerator(algorithm, alphabetSize, period, wordLength);
 
-        // 禁止ノードの組み合わせごとにグラフを生成
         for (const auto& forbiddenCombinations : forbiddenNodes) {
             Graph graph = generator->generate(forbiddenCombinations);
 
-            // 禁止ノードとエッジ数を出力
-            for (const auto& forbiddenNode : forbiddenCombinations) {
-                std::cout << forbiddenNode << ", ";
-            }
-            std::cout << graph.getEdges().size() << " edges." << std::endl;
-            // // エッジを出力
-            // for (const auto& edge : graph.getEdges()) {
-            //     std::cout << edge << std::endl;
-            // }
-            // std::cout << std::endl << std::endl;
+            saveEdges(baseDirectory, forbiddenCombinations, graph.getEdges());
         }
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
