@@ -3,12 +3,14 @@
 #include <map> // std::map
 #include "algorithm/Beal.hpp"
 #include "algorithm/DeBruijn.hpp"
+#include "algorithm/Moore.hpp"
 #include "analysis/eigenvalues.hpp"
 #include "core/constants.hpp"
 #include "core/Node.hpp"
 #include "io/input.hpp"
 #include "io/output.hpp"
 #include "utils/CombinationUtils.hpp"
+#include "utils/GraphUtils.hpp"
 
 using json = nlohmann::json;
 
@@ -124,6 +126,8 @@ int main(int argc, char* argv[]) {
     unsigned int wordLength = config.value("forbidden_word_length", 0);
     unsigned int period = config.value("period", 0);
     std::string algorithm = config.value("algorithm", "");
+    bool removeIsolatedNodes = config.value("remove_isolated_nodes", false);
+    bool minimize = config.value("minimize", false);
 
     auto forbiddenNodes = generateForbiddenNodes(config, mode, alphabetSize, wordLength, period);
 
@@ -135,6 +139,13 @@ int main(int argc, char* argv[]) {
 
         for (const auto& forbiddenCombinations : forbiddenNodes) {
             Graph graph = generator->generate(forbiddenCombinations);
+
+            if (removeIsolatedNodes) {
+                graph = cleanGraph(graph);
+                if (minimize) {
+                    graph = Moore::apply(graph);
+                }
+            }
 
             saveEdges(baseDirectory, forbiddenCombinations, graph.getEdges());
             saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph.getNodes(), graph.getEdges());
