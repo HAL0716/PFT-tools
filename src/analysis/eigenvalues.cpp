@@ -1,8 +1,10 @@
 #include "eigenvalues.hpp"
+
 #include <Spectra/GenEigsSolver.h>
 #include <Spectra/MatOp/DenseGenMatProd.h>
-#include <unordered_map>
+
 #include <stdexcept>
+#include <unordered_map>
 
 // Graphを引数に取り、最大固有値を返す関数
 double calculateMaxEigenvalue(const Graph& graph) {

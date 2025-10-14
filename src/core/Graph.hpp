@@ -1,11 +1,12 @@
 #pragma once
 
 #include <vector>
-#include "Node.hpp"
+
 #include "Edge.hpp"
+#include "Node.hpp"
 
 class Graph {
-public:
+   public:
     // ノードを追加
     void addNode(const Node& node);
 
@@ -21,7 +22,7 @@ public:
     // 隣接リストを生成
     std::unordered_map<Node, std::unordered_map<std::string, Node>> genAdjacencyList() const;
 
-private:
-    std::vector<Node> nodes; // ノードリスト
-    std::vector<Edge> edges; // エッジリスト
+   private:
+    std::vector<Node> nodes;  // ノードリスト
+    std::vector<Edge> edges;  // エッジリスト
 };

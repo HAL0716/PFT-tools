@@ -1,9 +1,10 @@
 #pragma once
-#include "nlohmann/json.hpp"
-#include <string>
-#include <vector>
 #include <optional>
 #include <stdexcept>
+#include <string>
+#include <vector>
+
+#include "nlohmann/json.hpp"
 
 struct OutputConfig {
     std::vector<std::string> formats;

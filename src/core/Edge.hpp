@@ -1,10 +1,11 @@
 #pragma once
 
 #include <string>
+
 #include "Node.hpp"
 
 class Edge {
-public:
+   public:
     // コンストラクタ
     Edge(const Node& source, const Node& target, const std::string& label = "");
 
@@ -20,8 +21,8 @@ public:
     // ストリーム出力演算子
     friend std::ostream& operator<<(std::ostream& os, const Edge& edge);
 
-private:
-    Node source; // 始点ノード
-    Node target; // 終点ノード
-    std::string label; // エッジのラベル
+   private:
+    Node source;        // 始点ノード
+    Node target;        // 終点ノード
+    std::string label;  // エッジのラベル
 };

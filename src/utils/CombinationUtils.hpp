@@ -1,8 +1,8 @@
 #pragma once
 
-#include <vector>
-#include <functional>
 #include <algorithm>
+#include <functional>
+#include <vector>
 
 // 復元なしの組み合わせ生成
 template <typename T>
@@ -46,7 +46,8 @@ std::vector<std::vector<typename T::value_type>> combineWithRep(const T& elems, 
 
 // 復元あり・なしを切り替え可能なラッパー関数
 template <typename T>
-std::vector<std::vector<typename T::value_type>> combine(const T& elems, unsigned int n, bool withRepetition) {
+std::vector<std::vector<typename T::value_type>> combine(const T& elems, unsigned int n,
+                                                         bool withRepetition) {
     if (withRepetition) {
         return combineWithRep(elems, n);
     } else {

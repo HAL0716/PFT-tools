@@ -1,13 +1,13 @@
-#include "formatter.hpp"
-#include "writer.hpp"
-#include "nlohmann/json.hpp"
-#include "input/Config.hpp"
-#include "input/loader.hpp"
 #include <filesystem>
 #include <sstream>
 
-using json = nlohmann::json;
+#include "formatter.hpp"
+#include "input/Config.hpp"
+#include "input/loader.hpp"
+#include "nlohmann/json.hpp"
+#include "writer.hpp"
 
+using json = nlohmann::json;
 
 std::string genOutputPath(const Config& config) {
     auto getRootPath = []() -> std::filesystem::path {
@@ -20,15 +20,15 @@ std::string genOutputPath(const Config& config) {
     basePath << projectRoot.string() << "/" << config.output.directory << "/";
 
     if (config.mode == "all-patterns") {
-        basePath << config.alphabet_size << "-"
-                 << config.period << "-"
+        basePath << config.alphabet_size << "-" << config.period << "-"
                  << config.forbidden_word_length.value_or(0);
 
         if (config.forbidden_per_position) {
             basePath << "-(";
             const auto& forbiddenCounts = config.forbidden_per_position.value();
             for (size_t i = 0; i < forbiddenCounts.size(); ++i) {
-                if (i > 0) basePath << "-";
+                if (i > 0)
+                    basePath << "-";
                 basePath << forbiddenCounts[i];
             }
             basePath << ")";
@@ -40,7 +40,8 @@ std::string genOutputPath(const Config& config) {
     return basePath.str();
 }
 
-void saveEdges(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes, const std::vector<Edge>& edges) {
+void saveEdges(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
+               const std::vector<Edge>& edges) {
     // フォーマット処理
     std::string formattedEdges = formatter::edges(edges);
 
@@ -48,7 +49,8 @@ void saveEdges(const std::string& baseDirectory, const std::vector<Node>& forbid
     writer::edges(baseDirectory, forbiddenNodes, edges);
 }
 
-void saveAdjacencyMatrix(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes, const std::vector<Node>& nodes, const std::vector<Edge>& edges) {
+void saveAdjacencyMatrix(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
+                         const std::vector<Node>& nodes, const std::vector<Edge>& edges) {
     // フォーマット処理
     std::string formattedMatrix = formatter::adjacencyMatrix(nodes, edges);
 

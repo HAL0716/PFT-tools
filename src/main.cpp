@@ -1,16 +1,17 @@
-#include <iostream>
-#include <memory> // std::unique_ptr
-#include <map> // std::map
 #include <CLI/CLI.hpp>
+#include <iostream>
+#include <map>     // std::map
+#include <memory>  // std::unique_ptr
+
 #include "algorithm/Beal.hpp"
 #include "algorithm/DeBruijn.hpp"
 #include "algorithm/Moore.hpp"
 #include "analysis/eigenvalues.hpp"
-#include "core/constants.hpp"
-#include "core/Node.hpp"
 #include "core/Graph.hpp"
-#include "input/loader.hpp"
+#include "core/Node.hpp"
+#include "core/constants.hpp"
 #include "input/input.hpp"
+#include "input/loader.hpp"
 #include "output/output.hpp"
 #include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
@@ -24,11 +25,14 @@ void printErrorAndExit(const std::string& message) {
 }
 
 // 動的にGraphGeneratorの派生クラスを生成するファクトリ関数
-std::unique_ptr<GraphGenerator> createGraphGenerator(const std::string& algorithm, unsigned int alphabetSize, unsigned int period, unsigned int wordLength) {
-    static const std::map<std::string, std::function<std::unique_ptr<GraphGenerator>()>> generatorMap = {
-        {"Beal", [=]() { return std::make_unique<Beal>(alphabetSize, period, wordLength); }},
-        {"DeBruijn", [=]() { return std::make_unique<DeBruijn>(alphabetSize, period, wordLength); }}
-    };
+std::unique_ptr<GraphGenerator> createGraphGenerator(const std::string& algorithm,
+                                                     unsigned int alphabetSize, unsigned int period,
+                                                     unsigned int wordLength) {
+    static const std::map<std::string, std::function<std::unique_ptr<GraphGenerator>()>>
+        generatorMap = {
+            {"Beal", [=]() { return std::make_unique<Beal>(alphabetSize, period, wordLength); }},
+            {"DeBruijn",
+             [=]() { return std::make_unique<DeBruijn>(alphabetSize, period, wordLength); }}};
 
     auto it = generatorMap.find(algorithm);
     if (it != generatorMap.end()) {
@@ -39,7 +43,9 @@ std::unique_ptr<GraphGenerator> createGraphGenerator(const std::string& algorith
 }
 
 // forbiddenNodesListを生成する関数
-std::vector<std::vector<std::vector<Node>>> generateForbiddenNodesList(const std::vector<std::string>& words, const std::vector<unsigned int>& forbiddenPerPosition, unsigned int period) {
+std::vector<std::vector<std::vector<Node>>> generateForbiddenNodesList(
+    const std::vector<std::string>& words, const std::vector<unsigned int>& forbiddenPerPosition,
+    unsigned int period) {
     std::vector<std::vector<std::vector<Node>>> forbiddenNodesList;
 
     for (int i = 0; i < period; ++i) {
@@ -60,7 +66,8 @@ std::vector<std::vector<std::vector<Node>>> generateForbiddenNodesList(const std
 }
 
 // DFSを用いて禁止ノードを組み合わせる関数
-std::vector<std::vector<Node>> combineForbiddenNodes(const std::vector<std::vector<std::vector<Node>>>& forbiddenNodesList) {
+std::vector<std::vector<Node>> combineForbiddenNodes(
+    const std::vector<std::vector<std::vector<Node>>>& forbiddenNodesList) {
     std::vector<std::vector<Node>> combinedNodes;
     std::function<void(int, std::vector<Node>)> dfs = [&](int depth, std::vector<Node> current) {
         if (depth == forbiddenNodesList.size()) {
@@ -78,7 +85,10 @@ std::vector<std::vector<Node>> combineForbiddenNodes(const std::vector<std::vect
 }
 
 // 禁止ノードの生成ロジックを分離
-std::vector<std::vector<Node>> generateForbiddenNodes(const json& config, const std::string& mode, unsigned int alphabetSize, unsigned int wordLength, unsigned int period) {
+std::vector<std::vector<Node>> generateForbiddenNodes(const json& config, const std::string& mode,
+                                                      unsigned int alphabetSize,
+                                                      unsigned int wordLength,
+                                                      unsigned int period) {
     if (mode == "custom") {
         // Customモードの禁止ノード生成
         std::vector<Node> forbiddenNodes;
@@ -98,7 +108,8 @@ std::vector<std::vector<Node>> generateForbiddenNodes(const json& config, const 
             printErrorAndExit("forbidden_per_position is missing.");
         }
 
-        auto forbiddenPerPosition = config.value("forbidden_per_position", std::vector<unsigned int>());
+        auto forbiddenPerPosition =
+            config.value("forbidden_per_position", std::vector<unsigned int>());
         if (forbiddenPerPosition.size() != period) {
             printErrorAndExit("forbidden_per_position size must match the period.");
         }
@@ -136,7 +147,8 @@ void generateGraphFromJson(const std::string& configPath) {
 
     try {
         // 動的にグラフ生成クラスを作成
-        std::unique_ptr<GraphGenerator> generator = createGraphGenerator(algorithm, alphabetSize, period, wordLength);
+        std::unique_ptr<GraphGenerator> generator =
+            createGraphGenerator(algorithm, alphabetSize, period, wordLength);
 
         for (const auto& forbiddenCombinations : forbiddenNodes) {
             Graph graph = generator->generate(forbiddenCombinations);
@@ -148,13 +160,15 @@ void generateGraphFromJson(const std::string& configPath) {
                 }
             }
 
-            std::cout << "Generated graph with " << graph.getNodes().size() << " nodes and " << graph.getEdges().size() << " edges." << std::endl;
+            std::cout << "Generated graph with " << graph.getNodes().size() << " nodes and "
+                      << graph.getEdges().size() << " edges." << std::endl;
 
             for (const auto& format : config["output"]["formats"]) {
                 if (format == "edges") {
                     saveEdges(baseDirectory, forbiddenCombinations, graph.getEdges());
                 } else if (format == "matrix") {
-                    saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph.getNodes(), graph.getEdges());
+                    saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph.getNodes(),
+                                        graph.getEdges());
                 }
             }
         }
@@ -181,7 +195,8 @@ int main(int argc, char* argv[]) {
     std::string format;
     bool maxEigenvalue = false;
 
-    app.add_option("--config", configPath, "Path to the configuration file or directory")->required();
+    app.add_option("--config", configPath, "Path to the configuration file or directory")
+        ->required();
     app.add_option("--format", format, "Input format: edges, matrix, or directory");
     app.add_flag("--max-eig", maxEigenvalue, "Calculate the maximum eigenvalue");
 

@@ -1,8 +1,9 @@
 #include "loader.hpp"
-#include <fstream>
-#include <sstream>
-#include <iostream>
+
 #include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
 namespace loader {
 
@@ -60,4 +61,4 @@ std::vector<std::string> getCsvFiles(const std::string& directoryPath) {
     return csvFiles;
 }
 
-} // namespace loader
+}  // namespace loader

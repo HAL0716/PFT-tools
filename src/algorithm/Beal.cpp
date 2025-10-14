@@ -1,6 +1,8 @@
 #include "Beal.hpp"
-#include "../utils/NodeUtils.hpp"
+
 #include <algorithm>
+
+#include "../utils/NodeUtils.hpp"
 
 std::vector<Node> Beal::generateNodes(const std::vector<Node>& forbiddenNodes) const {
     std::vector<Node> nodes;
@@ -27,7 +29,8 @@ std::vector<Node> Beal::generateNodes(const std::vector<Node>& forbiddenNodes) c
     return nodes;
 }
 
-Beal::Beal(unsigned int alphabetSize, unsigned int period, unsigned int wordLength) : period(period) {
+Beal::Beal(unsigned int alphabetSize, unsigned int period, unsigned int wordLength)
+    : period(period) {
     alphabet = ALPHABET.substr(0, alphabetSize);
 }
 
@@ -50,7 +53,8 @@ Graph Beal::generate(const std::vector<Node>& forbiddenNodes) const {
             std::string nextLabel = (label != "E" ? label : "") + c;
 
             // 次ノードを探索
-            auto findNextNode = [&](const std::string& prefix, unsigned int phaseOffset) -> std::pair<bool, Node> {
+            auto findNextNode = [&](const std::string& prefix,
+                                    unsigned int phaseOffset) -> std::pair<bool, Node> {
                 Node candidate(prefix, (phase + phaseOffset) % period);
                 if (containsNode(nodes, candidate)) {
                     return {true, candidate};

@@ -1,8 +1,10 @@
 #include "GraphUtils.hpp"
+
 #include "NodeUtils.hpp"
 
 // 計算: ノードの出次数と入次数
-std::pair<std::unordered_map<Node, int>, std::unordered_map<Node, int>> calcDegrees(const Graph& graph) {
+std::pair<std::unordered_map<Node, int>, std::unordered_map<Node, int>> calcDegrees(
+    const Graph& graph) {
     const auto& edges = graph.getEdges();
     const auto& nodes = graph.getNodes();
 
@@ -23,7 +25,9 @@ std::pair<std::unordered_map<Node, int>, std::unordered_map<Node, int>> calcDegr
 }
 
 // 削除: 孤立ノードを削除
-std::unordered_set<Node> removeZeroDegNodes(const Graph& graph, std::unordered_map<Node, int>& outDeg, std::unordered_map<Node, int>& inDeg) {
+std::unordered_set<Node> removeZeroDegNodes(const Graph& graph,
+                                            std::unordered_map<Node, int>& outDeg,
+                                            std::unordered_map<Node, int>& inDeg) {
     const auto& edges = graph.getEdges();
     const auto& nodes = graph.getNodes();
 

@@ -1,24 +1,25 @@
 #pragma once
 
-#include "../core/Node.hpp"
-#include "../core/Graph.hpp"
-#include "../core/constants.hpp"
-#include "GraphGenerator.hpp"
 #include <vector>
 
+#include "../core/Graph.hpp"
+#include "../core/Node.hpp"
+#include "../core/constants.hpp"
+#include "GraphGenerator.hpp"
+
 class Beal : public GraphGenerator {
-public:
+   public:
     // コンストラクタ
     Beal(unsigned int alphabetSize, unsigned int period, unsigned int wordLength = 0);
 
     // グラフ生成
-    Graph generate(const std::vector<Node>& forbiddenNodes)  const;
+    Graph generate(const std::vector<Node>& forbiddenNodes) const;
 
-private:
-    std::string alphabet; // アルファベット
-    unsigned int period;  // 周期
-
+   private:
+    std::string alphabet;  // アルファベット
+    unsigned int period;   // 周期
 
     // ヘルパー関数
-    std::vector<Node> generateNodes(const std::vector<Node>& forbiddenNodes) const; // ノード生成のヘルパー関数
+    std::vector<Node> generateNodes(
+        const std::vector<Node>& forbiddenNodes) const;  // ノード生成のヘルパー関数
 };

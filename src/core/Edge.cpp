@@ -24,8 +24,10 @@ bool Edge::operator==(const Edge& other) const {
 
 // 比較演算子
 bool Edge::operator<(const Edge& other) const {
-    if (source != other.source) return source < other.source;
-    if (target != other.target) return target < other.target;
+    if (source != other.source)
+        return source < other.source;
+    if (target != other.target)
+        return target < other.target;
     return label < other.label;
 }
 

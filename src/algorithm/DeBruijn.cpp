@@ -1,10 +1,12 @@
 #include "DeBruijn.hpp"
-#include "../core/constants.hpp"
-#include "../core/Node.hpp"
-#include "../core/Graph.hpp"
-#include "../utils/NodeUtils.hpp"
-#include "../utils/CombinationUtils.hpp"
+
 #include <unordered_set>
+
+#include "../core/Graph.hpp"
+#include "../core/Node.hpp"
+#include "../core/constants.hpp"
+#include "../utils/CombinationUtils.hpp"
+#include "../utils/NodeUtils.hpp"
 
 // ノード生成の更新
 void DeBruijn::generateNodes(unsigned int wordLength, unsigned int period) {
@@ -35,7 +37,8 @@ void DeBruijn::generateEdges() {
 }
 
 // コンストラクタ
-DeBruijn::DeBruijn(unsigned int alphabetSize, unsigned int period, unsigned int wordLength) : period(period) {
+DeBruijn::DeBruijn(unsigned int alphabetSize, unsigned int period, unsigned int wordLength)
+    : period(period) {
     alphabet = ALPHABET.substr(0, alphabetSize);
     generateNodes(wordLength, period);
     generateEdges();
@@ -54,7 +57,8 @@ Graph DeBruijn::generate(const std::vector<Node>& forbiddenNodes) const {
 
     for (const auto& edge : edges) {
         // 始点と終点が禁止ノードでない場合のみ追加
-        if (!containsNode(forbiddenNodes, edge.getSource()) && !containsNode(forbiddenNodes, edge.getTarget())) {
+        if (!containsNode(forbiddenNodes, edge.getSource()) &&
+            !containsNode(forbiddenNodes, edge.getTarget())) {
             graph.addEdge(edge);
         }
     }

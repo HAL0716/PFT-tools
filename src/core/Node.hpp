@@ -1,11 +1,11 @@
 #pragma once
 
-#include <string>
 #include <functional>
 #include <iostream>
+#include <string>
 
 class Node {
-public:
+   public:
     // デフォルトコンストラクタ
     Node() : label(""), phase(0) {}
 
@@ -24,17 +24,18 @@ public:
     // ストリーム出力演算子
     friend std::ostream& operator<<(std::ostream& os, const Node& node);
 
-private:
-    std::string label; // 頂点のラベル
-    unsigned int phase;    // 頂点の位相
+   private:
+    std::string label;   // 頂点のラベル
+    unsigned int phase;  // 頂点の位相
 };
 
 // ハッシュ関数の定義
 namespace std {
-    template<>
-    struct hash<Node> {
-        std::size_t operator()(const Node& node) const {
-            return std::hash<std::string>()(node.getLabel()) ^ (std::hash<unsigned int>()(node.getPhase()) << 1);
-        }
-    };
-}
+template <>
+struct hash<Node> {
+    std::size_t operator()(const Node& node) const {
+        return std::hash<std::string>()(node.getLabel()) ^
+               (std::hash<unsigned int>()(node.getPhase()) << 1);
+    }
+};
+}  // namespace std

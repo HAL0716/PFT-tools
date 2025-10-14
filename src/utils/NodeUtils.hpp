@@ -1,9 +1,10 @@
 #pragma once
 
-#include "../core/Node.hpp"
-#include <vector>
 #include <algorithm>
 #include <iterator>
+#include <vector>
+
+#include "../core/Node.hpp"
 
 // ヘルパー関数: ノードがリストに含まれているかをチェック
 template <typename Container>

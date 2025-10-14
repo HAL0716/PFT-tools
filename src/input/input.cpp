@@ -1,8 +1,10 @@
 #include "input.hpp"
-#include "loader.hpp"
+
 #include <iostream>
+
 #include "core/Edge.hpp"
 #include "core/Node.hpp"
+#include "loader.hpp"
 
 bool loadConfig(const std::string& filePath, Config& config) {
     nlohmann::json jsonConfig;
@@ -32,7 +34,7 @@ bool loadEdges(const std::string& filePath, Graph& graph) {
             std::cerr << "Error: Invalid edge data format in file: " << filePath << std::endl;
             return false;
         }
-        
+
         Node source(row[0]);
         Node target(row[1]);
         graph.addEdge(Edge(source, target));
@@ -49,7 +51,8 @@ bool loadAdjacencyMatrix(const std::string& filePath, Graph& graph) {
 
     for (size_t i = 0; i < csvData.size(); ++i) {
         if (csvData[i].size() != csvData.size()) {
-            std::cerr << "Error: Adjacency matrix must be square in file: " << filePath << std::endl;
+            std::cerr << "Error: Adjacency matrix must be square in file: " << filePath
+                      << std::endl;
             return false;
         }
 

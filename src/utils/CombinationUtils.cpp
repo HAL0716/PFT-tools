@@ -1,6 +1,7 @@
 #include "CombinationUtils.hpp"
-#include <vector>
+
 #include <string>
+#include <vector>
 
 // 文字列に対する組み合わせ生成関数
 std::vector<std::string> combine(const std::string& chars, unsigned int l, bool withRepetition) {
