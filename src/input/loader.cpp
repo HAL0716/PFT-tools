@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <filesystem>
 
 namespace loader {
 
@@ -41,6 +42,22 @@ bool csv(const std::string& filePath, std::vector<std::vector<std::string>>& csv
     }
 
     return true;
+}
+
+std::vector<std::string> getCsvFiles(const std::string& directoryPath) {
+    std::vector<std::string> csvFiles;
+
+    try {
+        for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
+            if (entry.is_regular_file() && entry.path().extension() == ".csv") {
+                csvFiles.push_back(entry.path().string());
+            }
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error: Failed to read directory: " << e.what() << std::endl;
+    }
+
+    return csvFiles;
 }
 
 } // namespace loader

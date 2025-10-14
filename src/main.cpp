@@ -1,14 +1,17 @@
 #include <iostream>
 #include <memory> // std::unique_ptr
 #include <map> // std::map
+#include <CLI/CLI.hpp>
 #include "algorithm/Beal.hpp"
 #include "algorithm/DeBruijn.hpp"
 #include "algorithm/Moore.hpp"
 #include "analysis/eigenvalues.hpp"
 #include "core/constants.hpp"
 #include "core/Node.hpp"
-#include "io/input.hpp"
-#include "io/output.hpp"
+#include "core/Graph.hpp"
+#include "input/loader.hpp"
+#include "input/input.hpp"
+#include "output/output.hpp"
 #include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
 
@@ -79,14 +82,14 @@ std::vector<std::vector<Node>> generateForbiddenNodes(const json& config, const 
     if (mode == "custom") {
         // Customモードの禁止ノード生成
         std::vector<Node> forbiddenNodes;
-        if (!config.contains("forbidden_list")) {
-            printErrorAndExit("forbidden_list is missing.");
-        }
-
-        for (const auto& forbidden : config["forbidden_list"]) {
-            if (forbidden.contains("word") && forbidden.contains("position")) {
-                forbiddenNodes.emplace_back(forbidden["word"], forbidden["position"]);
+        for (const auto& forbidden : config["forbidden_words"]) {
+            if (forbidden.size() != 2) {
+                printErrorAndExit("Each entry in forbidden_list must have 'word' and 'position'.");
             }
+            forbiddenNodes.emplace_back(forbidden[0], forbidden[1]);
+        }
+        if (forbiddenNodes.empty()) {
+            printErrorAndExit("forbidden_words is empty.");
         }
         return {forbiddenNodes};
     } else if (mode == "all-patterns") {
@@ -110,14 +113,12 @@ std::vector<std::vector<Node>> generateForbiddenNodes(const json& config, const 
     return {};
 }
 
-int main(int argc, char* argv[]) {
-    if (argc != 4 || std::string(argv[1]) != "generate" || std::string(argv[2]) != "--config") {
-        std::cerr << "Usage: " << argv[0] << " generate --config <config_path>" << std::endl;
-        return 1;
-    }
+// JSON設定からグラフを生成する関数
+void generateGraphFromJson(const std::string& configPath) {
+    std::cout << "Generating graph from JSON config: " << configPath << std::endl;
 
     json config;
-    if (!loadConfig(argv[3], config)) {
+    if (!loadConfig(configPath, config)) {
         printErrorAndExit("Failed to load config.");
     }
 
@@ -126,7 +127,7 @@ int main(int argc, char* argv[]) {
     unsigned int wordLength = config.value("forbidden_word_length", 0);
     unsigned int period = config.value("period", 0);
     std::string algorithm = config.value("algorithm", "");
-    bool removeIsolatedNodes = config.value("remove_isolated_nodes", false);
+    bool sinkLess = config.value("sink_less", false);
     bool minimize = config.value("minimize", false);
 
     auto forbiddenNodes = generateForbiddenNodes(config, mode, alphabetSize, wordLength, period);
@@ -140,23 +141,94 @@ int main(int argc, char* argv[]) {
         for (const auto& forbiddenCombinations : forbiddenNodes) {
             Graph graph = generator->generate(forbiddenCombinations);
 
-            if (removeIsolatedNodes) {
+            if (sinkLess) {
                 graph = cleanGraph(graph);
                 if (minimize) {
                     graph = Moore::apply(graph);
                 }
             }
 
-            saveEdges(baseDirectory, forbiddenCombinations, graph.getEdges());
-            saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph.getNodes(), graph.getEdges());
+            std::cout << "Generated graph with " << graph.getNodes().size() << " nodes and " << graph.getEdges().size() << " edges." << std::endl;
 
-            // 固有値計算と表示
-            double maxEigenvalue = calculateMaxEigenvalue(graph);
-            std::cout << "Max Eigenvalue: " << maxEigenvalue << std::endl;
+            for (const auto& format : config["output"]["formats"]) {
+                if (format == "edges") {
+                    saveEdges(baseDirectory, forbiddenCombinations, graph.getEdges());
+                } else if (format == "matrix") {
+                    saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph.getNodes(), graph.getEdges());
+                }
+            }
         }
     } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return 1;
+        printErrorAndExit(e.what());
+    }
+
+    std::cout << "Graph generation completed." << std::endl;
+}
+
+// ファイルパスから拡張子を取得する関数
+std::string getFileExtension(const std::string& filePath) {
+    size_t dotPos = filePath.rfind('.');
+    if (dotPos != std::string::npos) {
+        return filePath.substr(dotPos);
+    }
+    return "";
+}
+
+int main(int argc, char* argv[]) {
+    CLI::App app{"PFT-tools"};
+
+    std::string configPath;
+    std::string format;
+    bool maxEigenvalue = false;
+
+    app.add_option("--config", configPath, "Path to the configuration file or directory")->required();
+    app.add_option("--format", format, "Input format: edges, matrix, or directory");
+    app.add_flag("--max-eig", maxEigenvalue, "Calculate the maximum eigenvalue");
+
+    CLI11_PARSE(app, argc, argv);
+
+    try {
+        std::string extension = getFileExtension(configPath);
+
+        if (extension == ".json") {
+            generateGraphFromJson(configPath);
+            return 0;
+        }
+
+        if (format != "edges" && format != "matrix") {
+            printErrorAndExit("Invalid format specified. Use 'edges', 'matrix', or 'directory'.");
+        }
+
+        std::vector<std::string> csvFiles;
+        if (extension == ".csv") {
+            csvFiles.push_back(configPath);
+        } else if (extension.empty()) {
+            csvFiles = loader::getCsvFiles(configPath);
+            if (csvFiles.empty()) {
+                printErrorAndExit("No CSV files found in the specified directory.");
+            }
+        } else {
+            printErrorAndExit("Unsupported file extension: " + extension);
+        }
+
+        for (const auto& csvFile : csvFiles) {
+            Graph graph;
+            if (format == "edges") {
+                if (!loadEdges(csvFile, graph)) {
+                    continue;
+                }
+            } else if (format == "matrix") {
+                if (!loadAdjacencyMatrix(csvFile, graph)) {
+                    continue;
+                }
+            }
+
+            if (maxEigenvalue) {
+                std::cout << "Max Eigenvalue: " << calculateMaxEigenvalue(graph) << std::endl;
+            }
+        }
+    } catch (const std::exception& e) {
+        printErrorAndExit(e.what());
     }
 
     return 0;

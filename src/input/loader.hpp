@@ -10,4 +10,7 @@ namespace loader {
 
     // CSVデータを2次元ベクターに読み込む関数
     bool csv(const std::string& filePath, std::vector<std::vector<std::string>>& csvData);
+
+    // ディレクトリ内のすべての.csvファイルを取得する関数
+    std::vector<std::string> getCsvFiles(const std::string& directoryPath);
 }
