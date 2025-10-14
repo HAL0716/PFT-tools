@@ -136,6 +136,7 @@ int main(int argc, char* argv[]) {
             Graph graph = generator->generate(forbiddenCombinations);
 
             saveEdges(baseDirectory, forbiddenCombinations, graph.getEdges());
+            saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph.getNodes(), graph.getEdges());
         }
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

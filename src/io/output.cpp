@@ -19,6 +19,39 @@ std::string formatEdges(const std::vector<Edge>& edges) {
     return oss.str();
 }
 
+std::string formatAdjacencyMatrix(const std::vector<Node>& nodes, const std::vector<Edge>& edges) {
+    size_t n = nodes.size();
+    // ノードのラベルをインデックスにマッピング
+    std::unordered_map<Node, size_t> toIdx;
+    for (size_t i = 0; i < n; ++i) {
+        toIdx[nodes[i]] = i;
+    }
+
+    // 隣接行列を初期化
+    std::vector<std::vector<int>> adjMatrix(n, std::vector<int>(n, 0));
+
+    // エッジ情報を基に隣接行列を埋める
+    for (const auto& edge : edges) {
+        size_t srcIdx = toIdx[edge.getSource()];
+        size_t tgtIdx = toIdx[edge.getTarget()];
+        adjMatrix[srcIdx][tgtIdx] += 1;
+    }
+
+    // CSV形式の文字列に変換
+    std::ostringstream oss;
+
+    // 各行を追加
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            if (j > 0) oss << ",";
+            oss << adjMatrix[i][j];
+        }
+        oss << "\n";
+    }
+
+    return oss.str();
+}
+
 void writeCSV(const std::string& filePath, const std::string& csvData) {
     std::ofstream outFile(filePath);
 
@@ -64,15 +97,17 @@ std::string genOutputPath(const json& config) {
 }
 
 void saveEdges(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes, const std::vector<Edge>& edges) {
+    std::string dirPath = baseDirectory + "/edges/";
+
     // ディレクトリを作成し、存在しない場合は作成
-    if (!std::filesystem::exists(baseDirectory)) {
-        std::filesystem::create_directories(baseDirectory);
-        std::cout << "Created directory: " << baseDirectory << std::endl;
+    if (!std::filesystem::exists(dirPath)) {
+        std::filesystem::create_directories(dirPath);
+        std::cout << "Created directory: " << dirPath << std::endl;
     }
 
     // ファイル名を生成
     std::ostringstream oss;
-    oss << baseDirectory << "/";
+    oss << dirPath;
     for (size_t i = 0; i < forbiddenNodes.size(); ++i) {
         if (i > 0) oss << "-";
         oss << forbiddenNodes[i];
@@ -82,6 +117,32 @@ void saveEdges(const std::string& baseDirectory, const std::vector<Node>& forbid
 
     // エッジをCSV形式に変換
     std::string csvData = formatEdges(edges);
+
+    // ファイルに保存
+    writeCSV(fileName, csvData);
+}
+
+void saveAdjacencyMatrix(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes, const std::vector<Node>& nodes, const std::vector<Edge>& edges) {
+    std::string dirPath = baseDirectory + "/adjacency_matrix/";
+
+    // ディレクトリを作成し、存在しない場合は作成
+    if (!std::filesystem::exists(dirPath)) {
+        std::filesystem::create_directories(dirPath);
+        std::cout << "Created directory: " << dirPath << std::endl;
+    }
+
+    // ファイル名を生成
+    std::ostringstream oss;
+    oss << dirPath;
+    for (size_t i = 0; i < forbiddenNodes.size(); ++i) {
+        if (i > 0) oss << "-";
+        oss << forbiddenNodes[i];
+    }
+    oss << ".csv";
+    std::string fileName = oss.str();
+
+    // 隣接行列をCSV形式に変換
+    std::string csvData = formatAdjacencyMatrix(nodes, edges);
 
     // ファイルに保存
     writeCSV(fileName, csvData);
