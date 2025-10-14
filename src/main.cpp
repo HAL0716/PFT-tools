@@ -3,6 +3,7 @@
 #include <map> // std::map
 #include "algorithm/Beal.hpp"
 #include "algorithm/DeBruijn.hpp"
+#include "analysis/eigenvalues.hpp"
 #include "core/constants.hpp"
 #include "core/Node.hpp"
 #include "io/input.hpp"
@@ -137,6 +138,10 @@ int main(int argc, char* argv[]) {
 
             saveEdges(baseDirectory, forbiddenCombinations, graph.getEdges());
             saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph.getNodes(), graph.getEdges());
+
+            // 固有値計算と表示
+            double maxEigenvalue = calculateMaxEigenvalue(graph);
+            std::cout << "Max Eigenvalue: " << maxEigenvalue << std::endl;
         }
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
