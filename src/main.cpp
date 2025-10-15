@@ -219,11 +219,13 @@ int main(int argc, char* argv[]) {
     std::string configPath;
     std::string format;
     bool maxEigenvalue = false;
+    unsigned int sequencesLength = 0;
 
     app.add_option("--config", configPath, "Path to the configuration file or directory")
         ->required();
     app.add_option("--format", format, "Input format: edges, matrix, or directory");
     app.add_flag("--max-eig", maxEigenvalue, "Calculate the maximum eigenvalue");
+    app.add_option("--sequences", sequencesLength, "Length of edge label sequences to retrieve");
 
     CLI11_PARSE(app, argc, argv);
 
@@ -261,6 +263,15 @@ int main(int argc, char* argv[]) {
                 if (!loadAdjacencyMatrix(csvFile, graph)) {
                     continue;
                 }
+            }
+
+            if (sequencesLength > 0 && format == "edges") {
+                const auto& sequences = graph.getEdgeLabelSequences(sequencesLength);
+
+                std::string directory = path::getDirectory(csvFile, 2);
+                std::string fileName = path::getFileName(csvFile);
+                std::string filePath = directory + "/sequences/" + fileName;
+                saveSequences(filePath, sequences);
             }
 
             if (maxEigenvalue) {

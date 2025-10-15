@@ -22,12 +22,16 @@ pft-tools --config <隣接行列>.csv --format matrix --max-eig
 
 # ディレクトリ内すべての CSV ファイルから最大固有値を計算
 pft-tools --config <ディレクトリ名> --format matrix --max-eig
+
+# エッジラベルから生成可能な系列を指定長さで取得
+pft-tools --config <エッジリスト>.csv --format edges --sequences <長さ>
 ```
 
 - `<設定ファイル>.json`: 生成用の `JSON` ファイル
 - `<エッジリスト>.csv`: エッジリスト形式の `CSV` ファイル
 - `<隣接行列>.csv`: 隣接行列形式の `CSV` ファイル
 - `<ディレクトリ名>`: 複数の `CSV` ファイルが入ったディレクトリ
+- `<長さ>`: 取得したい系列の長さ（正の整数）
 
 ---
 
