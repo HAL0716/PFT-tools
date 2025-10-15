@@ -1,7 +1,8 @@
 #pragma once
 
-#include <vector>
 #include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "Edge.hpp"
 #include "Node.hpp"
@@ -22,6 +23,12 @@ class Graph {
 
     // 隣接リストを生成
     std::unordered_map<Node, std::unordered_map<std::string, Node>> genAdjacencyList() const;
+
+    // 長さLの経路の数を計算
+    int countPathsOfLength(int length) const;
+
+    // 長さLのエッジラベル列の集合を取得
+    std::unordered_set<std::string> getEdgeLabelSequences(int length) const;
 
    private:
     std::vector<Node> nodes;  // ノードリスト
