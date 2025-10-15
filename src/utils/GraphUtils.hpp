@@ -5,9 +5,9 @@
 #include <unordered_set>
 #include <vector>
 
-#include "core/Edge.hpp"
-#include "core/Graph.hpp"
-#include "core/Node.hpp"
+#include "../core/Edge.hpp"
+#include "../core/Graph.hpp"
+#include "../core/Node.hpp"
 
 // 孤立ノードを削除した新しいGraphを生成する関数
 Graph cleanGraph(const Graph& graph);

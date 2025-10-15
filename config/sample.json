@@ -1,15 +1,16 @@
 {
   "mode": "custom",
-  "algorithm": "DeBruijn",
-  "remove_isolated_nodes": true,
+  "algorithm": "Beal",
+  "sink_less": true,
   "minimize": true,
-  "alphabet_size": 3,
-  "period": 2,
-  "forbidden_word_length": 5,
-  "forbidden_list": [{ "word": "01210", "position": 0 }],
-  "forbidden_per_position": [1, 0],
+  "alphabet_size": 2,
+  "period": 3,
+  "forbidden_words": [
+    ["000", 0],
+    ["11", 1]
+  ],
   "output": {
-    "formats": ["edges", "matrix", "dot"],
+    "formats": ["edges", "matrix"],
     "directory": "results/"
   }
 }

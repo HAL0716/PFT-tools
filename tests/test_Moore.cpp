@@ -71,7 +71,7 @@ TEST(MooreTest, Apply2) {
     EXPECT_EQ(newGraph.getNodes().size(), 4);
     EXPECT_EQ(newGraph.getEdges().size(), 6);
 
-    for (const auto& node : newGraph.getNodes()) {
-        std::cout << node << std::endl;
-    }
+    // for (const auto& node : newGraph.getNodes()) {
+    //     std::cout << node << std::endl;
+    // }
 }

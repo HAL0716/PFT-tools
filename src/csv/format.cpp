@@ -69,4 +69,4 @@ std::string adjacencyMatrix(const Graph& graph) {
     return csvData.str();
 }
 
-}  // namespace formatter
+}  // namespace format
