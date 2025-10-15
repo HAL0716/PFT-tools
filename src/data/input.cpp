@@ -1,6 +1,7 @@
 #include "input.hpp"
 
 #include <iostream>
+#include <unordered_set>
 
 #include "core/Edge.hpp"
 #include "core/Node.hpp"
@@ -30,6 +31,8 @@ bool loadEdges(const std::string& filePath, Graph& graph) {
         return false;
     }
 
+    std::unordered_set<Node> nodes;
+
     for (const auto& row : csvData) {
         if (row.size() < 3) {
             std::cerr << "Error: Invalid edge data format in file: " << filePath << std::endl;
@@ -38,8 +41,14 @@ bool loadEdges(const std::string& filePath, Graph& graph) {
 
         Node source(row[0]);
         Node target(row[1]);
+        nodes.insert(source);
+        nodes.insert(target);
         std::string label = row[2];
         graph.addEdge(Edge(source, target, label));
+    }
+    
+    for (const auto& node : nodes) {
+        graph.addNode(node);
     }
 
     return true;

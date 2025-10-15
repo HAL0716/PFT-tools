@@ -18,4 +18,13 @@ std::string genDirPath(const Config& config);
 std::string genFilePath(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
                         const std::string& subDirectory);
 
+// 指定されたファイルパスからN世代前の親ディレクトリを取得する関数
+std::string getDirectory(const std::string& filePath, int generations = 1);
+
+// 指定されたファイルパスからファイル名を取得する関数
+std::string getFileName(const std::string& filePath);
+
+// 指定されたディレクトリが存在しない場合は作成する関数
+void genDirectory(const std::string& filePath);
+
 }  // namespace path
