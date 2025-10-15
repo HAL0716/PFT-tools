@@ -1,0 +1,16 @@
+{
+  "mode": "custom",
+  "algorithm": "Beal",
+  "sink_less": true,
+  "minimize": true,
+  "alphabet_size": 2,
+  "period": 3,
+  "forbidden_words": [
+    ["000", 0],
+    ["11", 1]
+  ],
+  "output": {
+    "formats": ["edges", "matrix"],
+    "directory": "results/"
+  }
+}
