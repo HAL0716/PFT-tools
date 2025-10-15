@@ -37,3 +37,24 @@ void saveAdjacencyMatrix(const std::string& baseDirectory, const std::vector<Nod
     outFile.close();
     std::cout << "Saved file: " << filePath << std::endl;
 }
+
+// エッジラベル系列を指定されたディレクトリに保存する関数
+void saveSequences(const std::string& filePath, const std::unordered_set<std::string>& sequences) {
+    // ソートして保存
+    std::vector<std::string> sortedSequences(sequences.begin(), sequences.end());
+    std::sort(sortedSequences.begin(), sortedSequences.end());
+
+    std::string csvData;
+    for (const auto& sequence : sortedSequences) {
+        csvData += sequence + "\n";
+    }
+
+    path::genDirectory(filePath);
+    std::ofstream outFile(filePath);
+    if (!outFile) {
+        throw std::ios_base::failure("Failed to open file for writing: " + filePath);
+    }
+    outFile << csvData;
+    outFile.close();
+    std::cout << "Saved file: " << filePath << std::endl;
+}
