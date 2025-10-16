@@ -17,6 +17,7 @@
 #include "path/PathUtils.hpp"
 #include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
+#include "graphviz/Graphviz.hpp"
 
 using json = nlohmann::json;
 
@@ -277,6 +278,9 @@ int main(int argc, char* argv[]) {
             if (maxEigenvalue) {
                 std::cout << "Max Eigenvalue: " << calculateMaxEigenvalue(graph) << std::endl;
             }
+
+            std::string directory = path::getDirectory(csvFile, 3);
+            graphviz::saveDotFile(directory + "/graphviz/graph.dot", graph);
         }
     } catch (const std::exception& e) {
         printErrorAndExit(e.what());
