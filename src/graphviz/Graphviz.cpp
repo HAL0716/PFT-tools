@@ -71,4 +71,19 @@ void cvtDot2Tex(const std::string& dotFilePath, const std::string& texFilePath) 
     std::cout << "Converted " << dotFilePath << " to " << texFilePath << std::endl;
 }
 
+void cvtTex2PDF(const std::string& texFilePath, const std::string& pdfFilePath) {
+    // pdflatexコマンドを構築
+    const std::string command =
+        "pdflatex -interaction=nonstopmode -output-directory=" + path::getDirectory(pdfFilePath) +
+        " " + texFilePath + " > /dev/null 2>&1";
+
+    int ret = std::system(command.c_str());
+    if (ret != 0) {
+        std::cerr << "Error: Failed to convert " << texFilePath << " to PDF." << std::endl;
+        return;
+    }
+
+    std::cout << "Converted " << texFilePath << " to " << pdfFilePath << std::endl;
+}
+
 }  // namespace graphviz

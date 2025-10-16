@@ -21,4 +21,7 @@ std::string generateGraphContent(const Graph& graph);
 // DOTファイルをTeXファイルに変換する関数
 void cvtDot2Tex(const std::string& dotFilePath, const std::string& texFilePath);
 
+// TeXファイルをPDFファイルに変換する関数
+void cvtTex2PDF(const std::string& texFilePath, const std::string& pdfFilePath);
+
 }  // namespace graphviz

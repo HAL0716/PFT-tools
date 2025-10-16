@@ -284,9 +284,11 @@ int main(int argc, char* argv[]) {
             std::string directory = path::getDirectory(csvFile, 3);
             std::string dotFilePath = directory + "/graphviz/graph.dot";
             std::string texFilePath = directory + "/graphviz/graph.tex";
+            std::string pdfFilePath = directory + "/graphviz/graph.pdf";
 
             graphviz::saveDotFile(dotFilePath, graph);
             graphviz::cvtDot2Tex(dotFilePath, texFilePath);
+            graphviz::cvtTex2PDF(texFilePath, pdfFilePath);
         }
     } catch (const std::exception& e) {
         printErrorAndExit(e.what());
