@@ -285,10 +285,12 @@ int main(int argc, char* argv[]) {
             std::string dotFilePath = directory + "/graphviz/graph.dot";
             std::string texFilePath = directory + "/graphviz/graph.tex";
             std::string pdfFilePath = directory + "/graphviz/graph.pdf";
+            std::string pngFilePath = directory + "/graphviz/graph.png";
 
             graphviz::saveDotFile(dotFilePath, graph);
             graphviz::cvtDot2Tex(dotFilePath, texFilePath);
             graphviz::cvtTex2PDF(texFilePath, pdfFilePath);
+            graphviz::cvtPDF2PNG(pdfFilePath, pngFilePath);
         }
     } catch (const std::exception& e) {
         printErrorAndExit(e.what());

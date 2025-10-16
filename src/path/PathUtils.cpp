@@ -104,9 +104,9 @@ std::string getDirectory(const std::string& filePath, int generations) {
     return path.string();
 }
 
-std::string getFileName(const std::string& filePath) {
+std::string getFileName(const std::string& filePath, bool withExt) {
     std::filesystem::path path(filePath);
-    return path.filename().string();
+    return withExt ? path.filename().string() : path.stem().string();
 }
 
 }  // namespace path

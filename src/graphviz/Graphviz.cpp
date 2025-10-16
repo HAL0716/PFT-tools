@@ -86,4 +86,20 @@ void cvtTex2PDF(const std::string& texFilePath, const std::string& pdfFilePath) 
     std::cout << "Converted " << texFilePath << " to " << pdfFilePath << std::endl;
 }
 
+void cvtPDF2PNG(const std::string& pdfFilePath, const std::string& pngFilePath) {
+    // pdftoppmコマンドを構築
+    const std::string baseName = path::getFileName(pdfFilePath, false);
+    const std::string outputDir = path::getDirectory(pngFilePath);
+    const std::string command =
+        "pdftoppm -png " + pdfFilePath + " " + outputDir + "/" + baseName + " > /dev/null 2>&1";
+
+    int ret = std::system(command.c_str());
+    if (ret != 0) {
+        std::cerr << "Error: Failed to convert " << pdfFilePath << " to PNG." << std::endl;
+        return;
+    }
+
+    std::cout << "Converted " << pdfFilePath << " to " << pngFilePath << std::endl;
+}
+
 }  // namespace graphviz
