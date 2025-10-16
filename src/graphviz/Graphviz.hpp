@@ -18,4 +18,7 @@ void writeEdges(std::ostringstream& content);
 // グラフの内容を生成する関数
 std::string generateGraphContent(const Graph& graph);
 
+// DOTファイルをTeXファイルに変換する関数
+void cvtDot2Tex(const std::string& dotFilePath, const std::string& texFilePath);
+
 }  // namespace graphviz

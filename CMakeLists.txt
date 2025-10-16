@@ -83,6 +83,7 @@ target_include_directories(PFT-tools PRIVATE
   ${eigen_SOURCE_DIR}
   ${spectra_SOURCE_DIR}/include
   ${cli11_proj_SOURCE_DIR}/include
+  ${dotenv_cpp_SOURCE_DIR}/include
 )
 
 # ライブラリリンク
@@ -114,3 +115,16 @@ add_custom_target(run_tests ALL
   COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
   DEPENDS PFT-tools
 )
+
+# Python仮想環境のセットアップ
+set(PYTHON_VENV_PATH "${CMAKE_BINARY_DIR}/venv")
+set(PYTHON_EXECUTABLE "${PYTHON_VENV_PATH}/bin/python3")
+
+add_custom_target(setup_venv ALL
+  COMMAND python3 -m venv ${PYTHON_VENV_PATH}
+  COMMAND ${PYTHON_EXECUTABLE} -m pip install --upgrade pip --quiet
+  COMMAND ${PYTHON_EXECUTABLE} -m pip install dot2tex --quiet
+)
+
+# 仮想環境のパスをコンパイル時に渡す
+target_compile_definitions(PFT-tools PRIVATE PYTHON_VENV_PATH="${PYTHON_VENV_PATH}")

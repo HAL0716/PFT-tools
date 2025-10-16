@@ -1,10 +1,15 @@
 #include "Graphviz.hpp"
 
+#include <cstdlib>  // std::system
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
 #include "path/PathUtils.hpp"
+
+#ifndef PYTHON_VENV_PATH
+#define PYTHON_VENV_PATH ""
+#endif
 
 namespace graphviz {
 
@@ -49,6 +54,21 @@ void saveDotFile(const std::string& filePath, const Graph& graph) {
 
     outFile.close();
     std::cout << "Dummy .dot file saved to " << filePath << std::endl;
+}
+
+void cvtDot2Tex(const std::string& dotFilePath, const std::string& texFilePath) {
+    // 仮想環境のPythonを使用してスクリプトを実行
+    const std::string pythonPath = std::string(PYTHON_VENV_PATH) + "/bin/python3";
+    const std::string pythonScript = "../scripts/convert_dot_to_tex.py";
+    const std::string command = pythonPath + " " + pythonScript + " " + dotFilePath;
+
+    int ret = std::system(command.c_str());
+    if (ret != 0) {
+        std::cerr << "Error: Failed to convert " << dotFilePath << " to TeX." << std::endl;
+        return;
+    }
+
+    std::cout << "Converted " << dotFilePath << " to " << texFilePath << std::endl;
 }
 
 }  // namespace graphviz

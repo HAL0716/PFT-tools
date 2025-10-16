@@ -1,8 +1,10 @@
 #include <CLI/CLI.hpp>
+#include <cstdlib>  // std::getenv
 #include <iostream>
 #include <map>      // std::map
 #include <memory>   // std::unique_ptr
 #include <numeric>  // std::transform_reduce
+#include <string>
 
 #include "algorithm/Beal.hpp"
 #include "algorithm/DeBruijn.hpp"
@@ -13,11 +15,11 @@
 #include "core/constants.hpp"
 #include "data/input.hpp"
 #include "data/output.hpp"
+#include "graphviz/Graphviz.hpp"
 #include "json/Config.hpp"
 #include "path/PathUtils.hpp"
 #include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
-#include "graphviz/Graphviz.hpp"
 
 using json = nlohmann::json;
 
@@ -280,7 +282,11 @@ int main(int argc, char* argv[]) {
             }
 
             std::string directory = path::getDirectory(csvFile, 3);
-            graphviz::saveDotFile(directory + "/graphviz/graph.dot", graph);
+            std::string dotFilePath = directory + "/graphviz/graph.dot";
+            std::string texFilePath = directory + "/graphviz/graph.tex";
+
+            graphviz::saveDotFile(dotFilePath, graph);
+            graphviz::cvtDot2Tex(dotFilePath, texFilePath);
         }
     } catch (const std::exception& e) {
         printErrorAndExit(e.what());
