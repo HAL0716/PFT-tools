@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <unordered_map>
 
 #include "path/PathUtils.hpp"
 
@@ -13,34 +14,54 @@
 
 namespace graphviz {
 
+// ヘッダーを出力する関数
+void writeHeader(std::ostringstream& content) {
+    content << "digraph G {\n"
+            << "\tlayout=neato;\n"
+            << "\tsplines=true;\n"
+            << "\tnode [shape=ellipse, fixedsize=true];\n"
+            << "\n";
+}
+
 // 頂点の定義を出力する関数
-void writeVertices(std::ostringstream& content) {
-    const std::vector<std::string> vertices = {"A", "B", "C"};
-    for (const auto& vertex : vertices) {
-        content << "\t" << vertex << ";\n";
+void writeVertices(std::ostringstream& content, const Graph& graph) {
+    auto nodes = graph.getNodes();
+    std::unordered_map<Node, size_t> toIdx;
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        toIdx[nodes[i]] = i;
+    }
+
+    for (const auto& node : nodes) {
+        content << "\t" << toIdx[node] << " [texlbl=\"$" << node << "$\"];\n";
     }
 }
 
 // 辺の定義を出力する関数
-void writeEdges(std::ostringstream& content) {
-    const std::vector<std::pair<std::string, std::string>> edges = {
-        {"A", "B"}, {"B", "C"}, {"C", "A"}};
-    for (const auto& edge : edges) {
-        content << "\t" << edge.first << " -> " << edge.second << ";\n";
+void writeEdges(std::ostringstream& content, const Graph& graph) {
+    auto nodes = graph.getNodes();
+    std::unordered_map<Node, size_t> toIdx;
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        toIdx[nodes[i]] = i;
+    }
+
+    for (const auto& edge : graph.getEdges()) {
+        content << "\t" << toIdx[edge.getSource()] << " -> " << toIdx[edge.getTarget()]
+                << " [label=\"" << edge.getLabel() << "\", texlbl=\"$" << edge.getLabel()
+                << "$\"];\n";
     }
 }
 
 // グラフの内容を生成する関数
 std::string generateGraphContent(const Graph& graph) {
     std::ostringstream content;
-    content << "digraph G {\n";
-    writeVertices(content);
-    writeEdges(content);
+    writeHeader(content);
+    writeVertices(content, graph);
+    writeEdges(content, graph);
     content << "}";
     return content.str();
 }
 
-// ダミーの.dotファイルを保存する関数
+// GraphをDOTファイルとして保存する関数
 void saveDotFile(const std::string& filePath, const Graph& graph) {
     path::genDirectory(filePath);
 
