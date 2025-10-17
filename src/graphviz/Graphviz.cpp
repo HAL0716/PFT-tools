@@ -1,6 +1,5 @@
 #include "Graphviz.hpp"
 
-#include <algorithm>
 #include <cstdlib>     // std::system
 #include <filesystem>  // std::filesystemを使用
 #include <fstream>
