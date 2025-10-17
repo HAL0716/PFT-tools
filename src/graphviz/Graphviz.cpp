@@ -13,6 +13,10 @@
 #define PYTHON_VENV_PATH ""
 #endif
 
+#ifndef PROJECT_SOURCE_DIR
+#define PROJECT_SOURCE_DIR ""
+#endif
+
 namespace graphviz {
 
 // ヘルパー関数: ノードインデックスマッピングを生成
@@ -97,7 +101,8 @@ void cvtDot2TeX(const std::string& baseDirectory, const std::vector<Node>& forbi
     std::string texFilePath = path::genFilePath(baseDirectory, forbiddenNodes, "tex", "tex");
 
     const std::string pythonPath = std::string(PYTHON_VENV_PATH) + "/bin/python3";
-    const std::string pythonScript = "../scripts/convert_dot_to_tex.py";
+    const std::string pythonScript =
+        (std::filesystem::path(PROJECT_SOURCE_DIR) / "scripts" / "convert_dot_to_tex.py").string();
     const std::string command = "\"" + pythonPath + "\" \"" + pythonScript + "\" \"" + dotFilePath +
                                 "\" \"" + texFilePath + "\"";
 
@@ -120,10 +125,18 @@ void cvtTex2PDF(const std::string& baseDirectory, const std::vector<Node>& forbi
         return;
     }
 
+    // 削除対象のLaTeX補助ファイル拡張子リスト
+    const std::vector<std::string> latexAuxExts = {".aux", ".log", ".out", ".toc", ".synctex.gz"};
+
     // 中間ファイルを削除
     std::string outputDir = path::getDirectory(pdfFilePath);
     for (const auto& entry : std::filesystem::directory_iterator(outputDir)) {
-        if (entry.path().extension() != ".pdf") {
+        std::string ext = entry.path().extension().string();
+        // .synctex.gzはextension()が".gz"になるため、basenameで判定
+        if (std::find(latexAuxExts.begin(), latexAuxExts.end(), ext) != latexAuxExts.end() ||
+            (entry.path().filename().string().size() >= 11 &&
+             entry.path().filename().string().compare(entry.path().filename().string().size() - 11,
+                                                      11, ".synctex.gz") == 0)) {
             std::filesystem::remove(entry.path());
         }
     }
