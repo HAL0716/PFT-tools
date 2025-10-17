@@ -37,7 +37,7 @@ def main() -> None:
         sys.exit(1)
 
     dot_file_path = sys.argv[1]
-    tex_file_path = sys.argv[2] or ""
+    tex_file_path = sys.argv[2] if len(sys.argv) == 3 else ""
     convert_dot_to_tex(dot_file_path, tex_file_path)
 
 if __name__ == "__main__":
