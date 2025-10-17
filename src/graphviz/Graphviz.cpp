@@ -83,11 +83,13 @@ void saveDot(const std::string& baseDirectory, const std::vector<Node>& forbidde
 
 // ファイル変換関連の関数
 
-void executeCommand(const std::string& command, const std::string& errorMessage) {
+bool executeCommand(const std::string& command, const std::string& errorMessage) {
     int ret = std::system(command.c_str());
     if (ret != 0) {
         std::cerr << errorMessage << std::endl;
+        return false;
     }
+    return true;
 }
 
 void cvtDot2TeX(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes) {
@@ -99,7 +101,9 @@ void cvtDot2TeX(const std::string& baseDirectory, const std::vector<Node>& forbi
     const std::string command = "\"" + pythonPath + "\" \"" + pythonScript + "\" \"" + dotFilePath +
                                 "\" \"" + texFilePath + "\"";
 
-    executeCommand(command, "Error: Failed to convert \"" + dotFilePath + "\" to TeX.");
+    if (!executeCommand(command, "Error: Failed to convert \"" + dotFilePath + "\" to TeX.")) {
+        return;
+    }
 
     std::cout << "Generated TeX file: " << texFilePath << std::endl;
 }
@@ -112,7 +116,9 @@ void cvtTex2PDF(const std::string& baseDirectory, const std::vector<Node>& forbi
                                 path::getDirectory(pdfFilePath) + "\" \"" + texFilePath +
                                 "\" > /dev/null 2>&1";
 
-    executeCommand(command, "Error: Failed to convert \"" + texFilePath + "\" to PDF.");
+    if (!executeCommand(command, "Error: Failed to convert \"" + texFilePath + "\" to PDF.")) {
+        return;
+    }
 
     // 中間ファイルを削除
     std::string outputDir = path::getDirectory(pdfFilePath);
@@ -135,7 +141,9 @@ void cvtPDF2PNG(const std::string& baseDirectory, const std::vector<Node>& forbi
     const std::string command = "pdftoppm -png -singlefile \"" + pdfFilePath + "\" \"" + outputDir +
                                 "/" + baseName + "\" > /dev/null 2>&1";
 
-    executeCommand(command, "Error: Failed to convert \"" + pdfFilePath + "\" to PNG.");
+    if (!executeCommand(command, "Error: Failed to convert \"" + pdfFilePath + "\" to PNG.")) {
+        return;
+    }
 
     std::cout << "Generated PNG file: " << pngFilePath << std::endl;
 }

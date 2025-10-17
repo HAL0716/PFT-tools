@@ -24,7 +24,7 @@ void writeEdges(std::ostringstream& content, const Graph& graph,
                 const std::unordered_map<Node, size_t>& toIdx);
 
 // ファイル変換関連の関数
-void executeCommand(const std::string& command, const std::string& errorMessage);
+bool executeCommand(const std::string& command, const std::string& errorMessage);
 void cvtDot2TeX(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes);
 void cvtTex2PDF(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes);
 void cvtPDF2PNG(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes);
