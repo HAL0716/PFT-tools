@@ -16,7 +16,7 @@
 namespace graphviz {
 
 // ヘルパー関数: ノードインデックスマッピングを生成
-std::unordered_map<Node, size_t> generateNodeIndexMap(const Graph& graph) {
+std::unordered_map<Node, size_t> genNodeIndexMap(const Graph& graph) {
     std::unordered_map<Node, size_t> toIdx;
     auto nodes = graph.getNodes();
     for (size_t i = 0; i < nodes.size(); ++i) {
@@ -35,17 +35,17 @@ void writeHeader(std::ostringstream& content) {
             << "\n";
 }
 
-void writeVertices(std::ostringstream& content, const Graph& graph) {
-    auto toIdx = generateNodeIndexMap(graph);
+void writeVertices(std::ostringstream& content, const Graph& graph,
+                   const std::unordered_map<Node, size_t>& toIdx) {
     for (const auto& [node, idx] : toIdx) {
         content << "\t" << idx << " [texlbl=\"$" << node.toTeX() << "$\"];\n";
     }
 }
 
-void writeEdges(std::ostringstream& content, const Graph& graph) {
-    auto toIdx = generateNodeIndexMap(graph);
+void writeEdges(std::ostringstream& content, const Graph& graph,
+                const std::unordered_map<Node, size_t>& toIdx) {
     for (const auto& edge : graph.getEdges()) {
-        content << "\t" << toIdx[edge.getSource()] << " -> " << toIdx[edge.getTarget()]
+        content << "\t" << toIdx.at(edge.getSource()) << " -> " << toIdx.at(edge.getTarget())
                 << " [label=\"" << edge.getLabel() << "\", texlbl=\"$" << edge.getLabel()
                 << "$\"];\n";
     }
@@ -54,8 +54,14 @@ void writeEdges(std::ostringstream& content, const Graph& graph) {
 std::string cvtGraph2Dot(const Graph& graph) {
     std::ostringstream content;
     writeHeader(content);
-    writeVertices(content, graph);
-    writeEdges(content, graph);
+
+    // Generate node index mapping once
+    auto toIdx = genNodeIndexMap(graph);
+
+    // Pass the mapping to writeVertices and writeEdges
+    writeVertices(content, graph, toIdx);
+    writeEdges(content, graph, toIdx);
+
     content << "}";
     return content.str();
 }
