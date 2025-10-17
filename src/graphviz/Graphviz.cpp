@@ -38,7 +38,7 @@ void writeHeader(std::ostringstream& content) {
 void writeVertices(std::ostringstream& content, const Graph& graph) {
     auto toIdx = generateNodeIndexMap(graph);
     for (const auto& [node, idx] : toIdx) {
-        content << "\t" << idx << " [texlbl=\"$" << node << "$\"];\n";
+        content << "\t" << idx << " [texlbl=\"$" << node.toTeX() << "$\"];\n";
     }
 }
 
