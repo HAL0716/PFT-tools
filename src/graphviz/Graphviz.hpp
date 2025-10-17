@@ -14,7 +14,7 @@ namespace graphviz {
 std::unordered_map<Node, size_t> genNodeIndexMap(const Graph& graph);
 
 // DOTファイル関連の関数
-void saveDot(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
+bool saveDot(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
              const Graph& graph);
 std::string cvtGraph2Dot(const Graph& graph);
 void writeHeader(std::ostringstream& content);
@@ -24,8 +24,8 @@ void writeEdges(std::ostringstream& content, const Graph& graph,
 
 // ファイル変換関連の関数
 bool executeCommand(const std::string& command, const std::string& errorMessage);
-void cvtDot2TeX(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes);
-void cvtTex2PDF(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes);
-void cvtPDF2PNG(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes);
+bool cvtDot2TeX(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes);
+bool cvtTex2PDF(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes);
+bool cvtPDF2PNG(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes);
 
 }  // namespace graphviz

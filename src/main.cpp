@@ -201,10 +201,18 @@ void generateGraphFromJson(const std::string& configPath) {
                 } else if (format == "dot") {
                     graphviz::saveDot(baseDirectory, forbiddenCombinations, graph);
                 } else if (format == "png") {
-                    graphviz::saveDot(baseDirectory, forbiddenCombinations, graph);
-                    graphviz::cvtDot2TeX(baseDirectory, forbiddenCombinations);
-                    graphviz::cvtTex2PDF(baseDirectory, forbiddenCombinations);
-                    graphviz::cvtPDF2PNG(baseDirectory, forbiddenCombinations);
+                    if (!graphviz::saveDot(baseDirectory, forbiddenCombinations, graph)) {
+                        continue;
+                    }
+                    if (!graphviz::cvtDot2TeX(baseDirectory, forbiddenCombinations)) {
+                        continue;
+                    }
+                    if (!graphviz::cvtTex2PDF(baseDirectory, forbiddenCombinations)) {
+                        continue;
+                    }
+                    if (!graphviz::cvtPDF2PNG(baseDirectory, forbiddenCombinations)) {
+                        continue;
+                    }
                 } else {
                     printErrorAndExit("Unknown output format: " + format);
                 }

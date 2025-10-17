@@ -71,18 +71,19 @@ std::string cvtGraph2Dot(const Graph& graph) {
 }
 
 // GraphをDOTファイルとして保存する関数
-void saveDot(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
+bool saveDot(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
              const Graph& graph) {
     std::string filePath = path::genFilePath(baseDirectory, forbiddenNodes, "dot", "dot");
 
     std::ofstream outFile(filePath);
     if (!outFile) {
         std::cerr << "Error: Could not open file " << filePath << " for writing." << std::endl;
-        return;
+        return false;
     }
     outFile << cvtGraph2Dot(graph);
     outFile.close();
     std::cout << "Saved DOT file: " << filePath << std::endl;
+    return true;
 }
 
 // ファイル変換関連の関数
@@ -96,7 +97,7 @@ bool executeCommand(const std::string& command, const std::string& errorMessage)
     return true;
 }
 
-void cvtDot2TeX(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes) {
+bool cvtDot2TeX(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes) {
     std::string dotFilePath = path::genFilePath(baseDirectory, forbiddenNodes, "dot", "dot");
     std::string texFilePath = path::genFilePath(baseDirectory, forbiddenNodes, "tex", "tex");
 
@@ -107,13 +108,14 @@ void cvtDot2TeX(const std::string& baseDirectory, const std::vector<Node>& forbi
                                 "\" \"" + texFilePath + "\"";
 
     if (!executeCommand(command, "Error: Failed to convert \"" + dotFilePath + "\" to TeX.")) {
-        return;
+        return false;
     }
 
     std::cout << "Generated TeX file: " << texFilePath << std::endl;
+    return true;
 }
 
-void cvtTex2PDF(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes) {
+bool cvtTex2PDF(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes) {
     std::string texFilePath = path::genFilePath(baseDirectory, forbiddenNodes, "tex", "tex");
     std::string pdfFilePath = path::genFilePath(baseDirectory, forbiddenNodes, "pdf", "pdf");
 
@@ -122,11 +124,11 @@ void cvtTex2PDF(const std::string& baseDirectory, const std::vector<Node>& forbi
                                 "\" > /dev/null 2>&1";
 
     if (!executeCommand(command, "Error: Failed to convert \"" + texFilePath + "\" to PDF.")) {
-        return;
+        return false;
     }
 
     // 削除対象のLaTeX補助ファイル拡張子リスト
-    const std::vector<std::string> latexAuxExts = {".aux", ".log", ".out", ".toc", ".synctex.gz"};
+    const std::vector<std::string> latexAuxExts = {".aux", ".log", ".out", ".toc"};
 
     // 中間ファイルを削除
     std::string outputDir = path::getDirectory(pdfFilePath);
@@ -142,9 +144,10 @@ void cvtTex2PDF(const std::string& baseDirectory, const std::vector<Node>& forbi
     }
 
     std::cout << "Generated PDF file: " << pdfFilePath << std::endl;
+    return true;
 }
 
-void cvtPDF2PNG(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes) {
+bool cvtPDF2PNG(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes) {
     std::string pdfFilePath = path::genFilePath(baseDirectory, forbiddenNodes, "pdf", "pdf");
     std::string pngFilePath = path::genFilePath(baseDirectory, forbiddenNodes, "png", "png");
 
@@ -155,10 +158,11 @@ void cvtPDF2PNG(const std::string& baseDirectory, const std::vector<Node>& forbi
                                 "/" + baseName + "\" > /dev/null 2>&1";
 
     if (!executeCommand(command, "Error: Failed to convert \"" + pdfFilePath + "\" to PNG.")) {
-        return;
+        return false;
     }
 
     std::cout << "Generated PNG file: " << pngFilePath << std::endl;
+    return true;
 }
 
 }  // namespace graphviz
