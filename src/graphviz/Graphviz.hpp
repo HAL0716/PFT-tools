@@ -1,33 +1,30 @@
 #pragma once
 
+#include <sstream>
 #include <string>
+#include <unordered_map>
+#include <vector>
 
 #include "core/Graph.hpp"
+#include "core/Node.hpp"
 
 namespace graphviz {
 
-// GraphをDOTファイルとして保存する関数
-void saveDotFile(const std::string& filePath, const Graph& graph);
+// ヘルパー関数
+std::unordered_map<Node, size_t> generateNodeIndexMap(const Graph& graph);
 
-// ヘッダーを出力する関数
+// DOTファイル関連の関数
+void saveDot(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
+             const Graph& graph);
+std::string cvtGraph2Dot(const Graph& graph);
 void writeHeader(std::ostringstream& content);
-
-// 頂点の定義を出力する関数
 void writeVertices(std::ostringstream& content, const Graph& graph);
-
-// 辺の定義を出力する関数
 void writeEdges(std::ostringstream& content, const Graph& graph);
 
-// グラフの内容を生成する関数
-std::string generateGraphContent(const Graph& graph);
-
-// DOTファイルをTeXファイルに変換する関数
-void cvtDot2Tex(const std::string& dotFilePath, const std::string& texFilePath);
-
-// TeXファイルをPDFファイルに変換する関数
-void cvtTex2PDF(const std::string& texFilePath, const std::string& pdfFilePath);
-
-// PDFファイルをPNGファイルに変換する関数
-void cvtPDF2PNG(const std::string& pdfFilePath, const std::string& pngFilePath);
+// ファイル変換関連の関数
+void executeCommand(const std::string& command, const std::string& errorMessage);
+void cvtDot2TeX(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes);
+void cvtTex2PDF(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes);
+void cvtPDF2PNG(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes);
 
 }  // namespace graphviz

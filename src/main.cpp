@@ -199,6 +199,15 @@ void generateGraphFromJson(const std::string& configPath) {
                     saveEdges(baseDirectory, forbiddenCombinations, graph);
                 } else if (format == "matrix") {
                     saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph);
+                } else if (format == "dot") {
+                    graphviz::saveDot(baseDirectory, forbiddenCombinations, graph);
+                } else if (format == "png") {
+                    graphviz::saveDot(baseDirectory, forbiddenCombinations, graph);
+                    graphviz::cvtDot2TeX(baseDirectory, forbiddenCombinations);
+                    graphviz::cvtTex2PDF(baseDirectory, forbiddenCombinations);
+                    graphviz::cvtPDF2PNG(baseDirectory, forbiddenCombinations);
+                } else {
+                    printErrorAndExit("Unknown output format: " + format);
                 }
             }
         }
@@ -280,17 +289,6 @@ int main(int argc, char* argv[]) {
             if (maxEigenvalue) {
                 std::cout << "Max Eigenvalue: " << calculateMaxEigenvalue(graph) << std::endl;
             }
-
-            std::string directory = path::getDirectory(csvFile, 3);
-            std::string dotFilePath = directory + "/graphviz/graph.dot";
-            std::string texFilePath = directory + "/graphviz/graph.tex";
-            std::string pdfFilePath = directory + "/graphviz/graph.pdf";
-            std::string pngFilePath = directory + "/graphviz/graph.png";
-
-            graphviz::saveDotFile(dotFilePath, graph);
-            graphviz::cvtDot2Tex(dotFilePath, texFilePath);
-            graphviz::cvtTex2PDF(texFilePath, pdfFilePath);
-            graphviz::cvtPDF2PNG(pdfFilePath, pngFilePath);
         }
     } catch (const std::exception& e) {
         printErrorAndExit(e.what());

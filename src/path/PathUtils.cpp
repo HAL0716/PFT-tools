@@ -53,7 +53,7 @@ std::string genDirPath(const Config& config) {
 }
 
 std::string genFilePath(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
-                        const std::string& subDirectory) {
+                        const std::string& subDirectory, const std::string& extension) {
     std::string dirPath = baseDirectory + "/" + subDirectory + "/";
     if (!std::filesystem::exists(dirPath)) {
         std::filesystem::create_directories(dirPath);
@@ -68,7 +68,7 @@ std::string genFilePath(const std::string& baseDirectory, const std::vector<Node
         const auto& node = forbiddenNodes[i];
         oss << node.getLabel() << ":" << node.getPhase();
     }
-    oss << ".csv";
+    oss << "." << extension;
 
     return oss.str();
 }

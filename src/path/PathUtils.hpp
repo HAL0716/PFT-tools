@@ -16,7 +16,7 @@ std::string genDirPath(const Config& config);
 
 // ファイルパスを生成する関数
 std::string genFilePath(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
-                        const std::string& subDirectory);
+                        const std::string& subDirectory, const std::string& extension = "csv");
 
 // 指定されたファイルパスからN世代前の親ディレクトリを取得する関数
 std::string getDirectory(const std::string& filePath, int generations = 1);

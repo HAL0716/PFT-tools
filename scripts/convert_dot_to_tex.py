@@ -17,14 +17,14 @@ def write_tex_file(tex_file_path: str, tex_content: str) -> None:
     with open(tex_file_path, 'w') as tex_file:
         tex_file.write(tex_content)
 
-def convert_dot_to_tex(dot_file_path: str) -> None:
+def convert_dot_to_tex(dot_file_path: str, tex_file_path: str = "") -> None:
     """DOTファイルをTeXファイルに変換"""
     if not os.path.exists(dot_file_path):
         print(f"Error: {dot_file_path} が存在しません。")
         sys.exit(1)
 
     # 出力ファイルのパスを生成
-    tex_file_path = os.path.splitext(dot_file_path)[0] + ".tex"
+    tex_file_path = tex_file_path or os.path.splitext(dot_file_path)[0] + ".tex"
     dot_content = read_dot_file(dot_file_path)
     tex_content = dot2tex(dot_content, format='tikz')
     formatted_tex_content = format_tex_code(tex_content)
@@ -32,12 +32,13 @@ def convert_dot_to_tex(dot_file_path: str) -> None:
 
 def main() -> None:
     """メイン処理"""
-    if len(sys.argv) != 2:
-        print("使い方: python convert_dot_to_tex.py <dot_file_path>")
+    if len(sys.argv) < 2 or 3 < len(sys.argv):
+        print("使い方: python convert_dot_to_tex.py <dot_file_path> <tex_file_path (optional)>")
         sys.exit(1)
 
     dot_file_path = sys.argv[1]
-    convert_dot_to_tex(dot_file_path)
+    tex_file_path = sys.argv[2] or ""
+    convert_dot_to_tex(dot_file_path, tex_file_path)
 
 if __name__ == "__main__":
     main()
