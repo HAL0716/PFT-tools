@@ -199,7 +199,9 @@ void generateGraphFromJson(const std::string& configPath) {
                 } else if (format == "matrix") {
                     saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph);
                 } else if (format == "dot") {
-                    graphviz::saveDot(baseDirectory, forbiddenCombinations, graph);
+                    if (!graphviz::saveDot(baseDirectory, forbiddenCombinations, graph) ) {
+                        continue;
+                    }
                 } else if (format == "png") {
                     if (!graphviz::saveDot(baseDirectory, forbiddenCombinations, graph)) {
                         continue;
