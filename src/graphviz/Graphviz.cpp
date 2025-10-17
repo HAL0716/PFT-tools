@@ -90,10 +90,10 @@ void cvtDot2TeX(const std::string& baseDirectory, const std::vector<Node>& forbi
 
     const std::string pythonPath = std::string(PYTHON_VENV_PATH) + "/bin/python3";
     const std::string pythonScript = "../scripts/convert_dot_to_tex.py";
-    const std::string command =
-        pythonPath + " " + pythonScript + " " + dotFilePath + " " + texFilePath;
+    const std::string command = "\"" + pythonPath + "\" \"" + pythonScript + "\" \"" + dotFilePath +
+                                "\" \"" + texFilePath + "\"";
 
-    executeCommand(command, "Error: Failed to convert " + dotFilePath + " to TeX.");
+    executeCommand(command, "Error: Failed to convert \"" + dotFilePath + "\" to TeX.");
 
     std::cout << "Generated TeX file: " << texFilePath << std::endl;
 }
@@ -102,11 +102,11 @@ void cvtTex2PDF(const std::string& baseDirectory, const std::vector<Node>& forbi
     std::string texFilePath = path::genFilePath(baseDirectory, forbiddenNodes, "tex", "tex");
     std::string pdfFilePath = path::genFilePath(baseDirectory, forbiddenNodes, "pdf", "pdf");
 
-    const std::string command =
-        "pdflatex -interaction=nonstopmode -output-directory=" + path::getDirectory(pdfFilePath) +
-        " " + texFilePath + " > /dev/null 2>&1";
+    const std::string command = "pdflatex -interaction=nonstopmode -output-directory=\"" +
+                                path::getDirectory(pdfFilePath) + "\" \"" + texFilePath +
+                                "\" > /dev/null 2>&1";
 
-    executeCommand(command, "Error: Failed to convert " + texFilePath + " to PDF.");
+    executeCommand(command, "Error: Failed to convert \"" + texFilePath + "\" to PDF.");
 
     // 中間ファイルを削除
     std::string outputDir = path::getDirectory(pdfFilePath);
@@ -125,10 +125,11 @@ void cvtPDF2PNG(const std::string& baseDirectory, const std::vector<Node>& forbi
 
     const std::string baseName = path::getFileName(pdfFilePath, false);
     const std::string outputDir = path::getDirectory(pngFilePath);
-    const std::string command =
-        "pdftoppm -png " + pdfFilePath + " " + outputDir + "/" + baseName + " > /dev/null 2>&1";
 
-    executeCommand(command, "Error: Failed to convert " + pdfFilePath + " to PNG.");
+    const std::string command = "pdftoppm -png -singlefile \"" + pdfFilePath + "\" \"" + outputDir +
+                                "/" + baseName + "\" > /dev/null 2>&1";
+
+    executeCommand(command, "Error: Failed to convert \"" + pdfFilePath + "\" to PNG.");
 
     std::cout << "Generated PNG file: " << pngFilePath << std::endl;
 }
