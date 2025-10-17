@@ -127,20 +127,22 @@ bool cvtTex2PDF(const std::string& baseDirectory, const std::vector<Node>& forbi
         return false;
     }
 
-    // 削除対象のLaTeX補助ファイル拡張子リスト
+    // 中間ファイルを削除（現在のドキュメントのベース名に限定）
+    std::string outputDir = path::getDirectory(pdfFilePath);
+    std::string baseName = path::getFileName(pdfFilePath, false);  // 拡張子なし
     const std::vector<std::string> latexAuxExts = {".aux", ".log", ".out", ".toc"};
 
-    // 中間ファイルを削除
-    std::string outputDir = path::getDirectory(pdfFilePath);
-    for (const auto& entry : std::filesystem::directory_iterator(outputDir)) {
-        std::string ext = entry.path().extension().string();
-        // .synctex.gzはextension()が".gz"になるため、basenameで判定
-        if (std::find(latexAuxExts.begin(), latexAuxExts.end(), ext) != latexAuxExts.end() ||
-            (entry.path().filename().string().size() >= 11 &&
-             entry.path().filename().string().compare(entry.path().filename().string().size() - 11,
-                                                      11, ".synctex.gz") == 0)) {
-            std::filesystem::remove(entry.path());
+    for (const auto& ext : latexAuxExts) {
+        std::filesystem::path auxPath = std::filesystem::path(outputDir) / (baseName + ext);
+        if (std::filesystem::exists(auxPath)) {
+            std::filesystem::remove(auxPath);
         }
+    }
+
+    std::filesystem::path synctexPath =
+        std::filesystem::path(outputDir) / (baseName + ".synctex.gz");
+    if (std::filesystem::exists(synctexPath)) {
+        std::filesystem::remove(synctexPath);
     }
 
     std::cout << "Generated PDF file: " << pdfFilePath << std::endl;
