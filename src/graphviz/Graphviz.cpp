@@ -1,5 +1,6 @@
 #include "Graphviz.hpp"
 
+#include <algorithm>
 #include <cstdlib>     // std::system
 #include <filesystem>  // std::filesystemを使用
 #include <fstream>
@@ -39,8 +40,7 @@ void writeHeader(std::ostringstream& content) {
             << "\n";
 }
 
-void writeVertices(std::ostringstream& content, const Graph& graph,
-                   const std::unordered_map<Node, size_t>& toIdx) {
+void writeVertices(std::ostringstream& content, const std::unordered_map<Node, size_t>& toIdx) {
     for (const auto& [node, idx] : toIdx) {
         content << "\t" << idx << " [texlbl=\"$" << node.toTeX() << "$\"];\n";
     }
@@ -63,7 +63,7 @@ std::string cvtGraph2Dot(const Graph& graph) {
     auto toIdx = genNodeIndexMap(graph);
 
     // Pass the mapping to writeVertices and writeEdges
-    writeVertices(content, graph, toIdx);
+    writeVertices(content, toIdx);
     writeEdges(content, graph, toIdx);
 
     content << "}";

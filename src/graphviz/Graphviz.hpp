@@ -18,8 +18,7 @@ void saveDot(const std::string& baseDirectory, const std::vector<Node>& forbidde
              const Graph& graph);
 std::string cvtGraph2Dot(const Graph& graph);
 void writeHeader(std::ostringstream& content);
-void writeVertices(std::ostringstream& content, const Graph& graph,
-                   const std::unordered_map<Node, size_t>& toIdx);
+void writeVertices(std::ostringstream& content, const std::unordered_map<Node, size_t>& toIdx);
 void writeEdges(std::ostringstream& content, const Graph& graph,
                 const std::unordered_map<Node, size_t>& toIdx);
 
