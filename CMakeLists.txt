@@ -83,7 +83,6 @@ target_include_directories(PFT-tools PRIVATE
   ${eigen_SOURCE_DIR}
   ${spectra_SOURCE_DIR}/include
   ${cli11_proj_SOURCE_DIR}/include
-  ${dotenv_cpp_SOURCE_DIR}/include
 )
 
 # ライブラリリンク

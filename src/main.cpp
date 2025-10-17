@@ -1,5 +1,4 @@
 #include <CLI/CLI.hpp>
-#include <cstdlib>  // std::getenv
 #include <iostream>
 #include <map>      // std::map
 #include <memory>   // std::unique_ptr
