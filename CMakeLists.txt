@@ -88,9 +88,6 @@ target_include_directories(PFT-tools PRIVATE
 # ライブラリリンク
 target_link_libraries(PFT-tools PRIVATE nlohmann_json::nlohmann_json CLI11::CLI11)
 
-# Python仮想環境のセットアップに依存関係を追加
-add_dependencies(PFT-tools setup_venv)
-
 # -------------------------
 # テスト設定
 # -------------------------
@@ -124,10 +121,18 @@ add_custom_target(run_tests ALL
 set(PYTHON_VENV_PATH "${CMAKE_BINARY_DIR}/venv")
 set(PYTHON_EXECUTABLE "${PYTHON_VENV_PATH}/bin/python3")
 
-add_custom_target(setup_venv ALL
+add_custom_command(
+  OUTPUT ${PYTHON_EXECUTABLE}
   COMMAND python3 -m venv ${PYTHON_VENV_PATH}
   COMMAND ${PYTHON_EXECUTABLE} -m pip install --upgrade pip --quiet
   COMMAND ${PYTHON_EXECUTABLE} -m pip install dot2tex --quiet
+  BYPRODUCTS ${PYTHON_EXECUTABLE}
+  COMMENT "Setting up Python virtual environment and installing dependencies"
 )
 
-target_compile_definitions(PFT-tools PRIVATE PYTHON_VENV_PATH="${PYTHON_VENV_PATH}")
+add_custom_target(setup_venv DEPENDS ${PYTHON_EXECUTABLE})
+
+add_dependencies(PFT-tools setup_venv)
+
+target_compile_definitions(PFT-tools PRIVATE PYTHON_VENV_PATH=\"${PYTHON_VENV_PATH}\")
+target_compile_definitions(PFT-tools PRIVATE PROJECT_SOURCE_DIR=\"${CMAKE_SOURCE_DIR}\")
