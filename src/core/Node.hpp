@@ -15,6 +15,7 @@ class Node {
     // ゲッター
     const std::string& getLabel() const;
     unsigned int getPhase() const;
+    std::string toTeX() const;
 
     // 比較演算子
     bool operator==(const Node& other) const;

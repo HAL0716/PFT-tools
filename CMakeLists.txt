@@ -114,3 +114,25 @@ add_custom_target(run_tests ALL
   COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
   DEPENDS PFT-tools
 )
+
+# -------------------------
+# Python仮想環境のセットアップ
+# -------------------------
+set(PYTHON_VENV_PATH "${CMAKE_BINARY_DIR}/venv")
+set(PYTHON_EXECUTABLE "${PYTHON_VENV_PATH}/bin/python3")
+
+add_custom_command(
+  OUTPUT ${PYTHON_EXECUTABLE}
+  COMMAND python3 -m venv ${PYTHON_VENV_PATH}
+  COMMAND ${PYTHON_EXECUTABLE} -m pip install --upgrade pip --quiet
+  COMMAND ${PYTHON_EXECUTABLE} -m pip install dot2tex --quiet
+  BYPRODUCTS ${PYTHON_EXECUTABLE}
+  COMMENT "Setting up Python virtual environment and installing dependencies"
+)
+
+add_custom_target(setup_venv DEPENDS ${PYTHON_EXECUTABLE})
+
+add_dependencies(PFT-tools setup_venv)
+
+target_compile_definitions(PFT-tools PRIVATE PYTHON_VENV_PATH=\"${PYTHON_VENV_PATH}\")
+target_compile_definitions(PFT-tools PRIVATE PROJECT_SOURCE_DIR=\"${CMAKE_SOURCE_DIR}\")

@@ -14,6 +14,11 @@ unsigned int Node::getPhase() const {
     return phase;
 }
 
+std::string Node::toTeX() const {
+    std::string formattedLabel = (label != "E" ? label : "\\epsilon");
+    return "(" + formattedLabel + "," + std::to_string(phase) + ")";
+}
+
 // 比較演算子
 bool Node::operator==(const Node& other) const {
     return label == other.label && phase == other.phase;

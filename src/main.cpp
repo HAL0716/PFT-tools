@@ -3,6 +3,7 @@
 #include <map>      // std::map
 #include <memory>   // std::unique_ptr
 #include <numeric>  // std::transform_reduce
+#include <string>
 
 #include "algorithm/Beal.hpp"
 #include "algorithm/DeBruijn.hpp"
@@ -13,6 +14,7 @@
 #include "core/constants.hpp"
 #include "data/input.hpp"
 #include "data/output.hpp"
+#include "graphviz/Graphviz.hpp"
 #include "json/Config.hpp"
 #include "path/PathUtils.hpp"
 #include "utils/CombinationUtils.hpp"
@@ -196,6 +198,25 @@ void generateGraphFromJson(const std::string& configPath) {
                     saveEdges(baseDirectory, forbiddenCombinations, graph);
                 } else if (format == "matrix") {
                     saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph);
+                } else if (format == "dot") {
+                    if (!graphviz::saveDot(baseDirectory, forbiddenCombinations, graph) ) {
+                        continue;
+                    }
+                } else if (format == "png") {
+                    if (!graphviz::saveDot(baseDirectory, forbiddenCombinations, graph)) {
+                        continue;
+                    }
+                    if (!graphviz::cvtDot2TeX(baseDirectory, forbiddenCombinations)) {
+                        continue;
+                    }
+                    if (!graphviz::cvtTex2PDF(baseDirectory, forbiddenCombinations)) {
+                        continue;
+                    }
+                    if (!graphviz::cvtPDF2PNG(baseDirectory, forbiddenCombinations)) {
+                        continue;
+                    }
+                } else {
+                    printErrorAndExit("Unknown output format: " + format);
                 }
             }
         }
