@@ -1,14 +1,31 @@
 #pragma once
 
-#include <nlohmann/json.hpp>
 #include <string>
 
-namespace json {
+#include "nlohmann/json.hpp"
 
-// JSONファイルを読み込む関数
-bool read(const std::string& filePath, nlohmann::json& jsonData);
+namespace io::formats::json {
 
-// JSONファイルを書き込む関数
-bool write(const std::string& filePath, const nlohmann::json& jsonData);
+using json = nlohmann::json;
 
-}  // namespace json
+/**
+ * @brief JSONファイルを読み込み、データを取得する
+ *
+ * @param filePath 読み込むJSONファイルのパス
+ * @param jsonData 読み込んだデータを格納するnlohmann::jsonオブジェクト
+ * @return true ファイルの読み込みに成功した場合
+ * @return false ファイルの読み込みに失敗した場合
+ */
+bool read(const std::string& filePath, json& jsonData);
+
+/**
+ * @brief JSONデータをファイルに書き込む
+ *
+ * @param filePath 書き込むJSONファイルのパス
+ * @param jsonData 書き込むnlohmann::jsonオブジェクト
+ * @return true ファイルの書き込みに成功した場合
+ * @return false ファイルの書き込みに失敗した場合
+ */
+bool write(const std::string& filePath, const json& jsonData);
+
+}  // namespace io::formats::json

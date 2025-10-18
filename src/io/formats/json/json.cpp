@@ -2,16 +2,17 @@
 
 #include <fstream>
 #include <iostream>
-#include <nlohmann/json.hpp>
 
-namespace json {
+#include "io/utils/utils.hpp"
 
-bool read(const std::string& filePath, nlohmann::json& jsonData) {
+namespace io::formats::json {
+
+bool read(const std::string& filePath, json& jsonData) {
     std::ifstream file(filePath);
-    if (!file) {
-        std::cerr << "Error: Could not open file: " << filePath << std::endl;
+    if (!io::utils::checkFileOpen(file, filePath)) {
         return false;
     }
+
     try {
         file >> jsonData;
     } catch (const std::exception& e) {
@@ -21,12 +22,12 @@ bool read(const std::string& filePath, nlohmann::json& jsonData) {
     return true;
 }
 
-bool write(const std::string& filePath, const nlohmann::json& jsonData) {
+bool write(const std::string& filePath, const json& jsonData) {
     std::ofstream file(filePath);
-    if (!file) {
-        std::cerr << "Error: Could not open file for writing: " << filePath << std::endl;
+    if (!io::utils::checkFileOpen(file, filePath)) {
         return false;
     }
+
     try {
         file << jsonData.dump(4);
     } catch (const std::exception& e) {
@@ -36,4 +37,4 @@ bool write(const std::string& filePath, const nlohmann::json& jsonData) {
     return true;
 }
 
-}  // namespace json
+}  // namespace io::formats::json
