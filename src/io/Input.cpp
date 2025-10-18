@@ -132,6 +132,12 @@ std::vector<std::vector<std::vector<Node>>> genForbiddenList(const Config& confi
     const auto& words = combine(ALPHABET.substr(0, config.alphabet_size),
                                 config.forbidden_word_length.value(), true);
     const auto& perPosition = config.forbidden_per_position.value();
+    if (perPosition.size() < config.period) {
+        io::utils::printErrorAndExit(
+            "forbidden_per_position.size() (" + std::to_string(perPosition.size()) +
+            ") is less than config.period (" + std::to_string(config.period) +
+            "). Check your configuration to avoid truncation.");
+    }
     unsigned int period = std::min(config.period, static_cast<unsigned int>(perPosition.size()));
 
     for (unsigned int p = 0; p < period; ++p) {

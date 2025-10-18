@@ -26,7 +26,7 @@ bool write(const std::string& path, const std::string& data) {
     path::genDirectory(path);
     std::ofstream file(path);
     if (!io::utils::checkFileOpen(file, path)) {
-        io::utils::printErrorAndExit("Failed to open file for writing: " + path);
+        return false;
     }
     try {
         file << data;
