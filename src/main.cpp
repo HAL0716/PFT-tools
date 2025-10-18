@@ -16,11 +16,12 @@
 #include "io/formats/json/Config.hpp"
 #include "io/input/Input.hpp"
 #include "io/output/Output.hpp"
+#include "io/utils/ForbiddenNodes.hpp"
+#include "io/utils/utils.hpp"
 #include "io/visualization/Graphviz.hpp"
 #include "path/PathUtils.hpp"
 #include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
-#include "io/utils/utils.hpp"
 
 using json = nlohmann::json;
 
@@ -47,73 +48,6 @@ std::unique_ptr<GraphGenerator> createGraphGenerator(const Config& config) {
     }
 }
 
-// forbiddenNodesListを生成する関数
-std::vector<std::vector<std::vector<Node>>> generateForbiddenNodesList(
-    const std::vector<std::string>& words, const std::vector<unsigned int>& forbiddenPerPosition,
-    unsigned int period) {
-    std::vector<std::vector<std::vector<Node>>> forbiddenNodesList;
-
-    for (int i = 0; i < period; ++i) {
-        unsigned int n = forbiddenPerPosition[i];
-        if (n > words.size()) {
-            io::utils::printErrorAndExit("forbidden_per_position value exceeds total combinations.");
-        }
-
-        std::vector<Node> forbiddenNodes;
-        for (const auto& w : words) {
-            forbiddenNodes.emplace_back(w, i);
-        }
-
-        forbiddenNodesList.push_back(combine(forbiddenNodes, n, false));
-    }
-
-    return forbiddenNodesList;
-}
-
-// DFSを用いて禁止ノードを組み合わせる関数
-std::vector<std::vector<Node>> combineForbiddenNodes(
-    const std::vector<std::vector<std::vector<Node>>>& forbiddenNodesList) {
-    std::vector<std::vector<Node>> combinedNodes;
-    std::function<void(int, std::vector<Node>)> dfs = [&](int depth, std::vector<Node> current) {
-        if (depth == forbiddenNodesList.size()) {
-            combinedNodes.push_back(current);
-            return;
-        }
-        for (const auto& nodes : forbiddenNodesList[depth]) {
-            auto next = current;
-            next.insert(next.end(), nodes.begin(), nodes.end());
-            dfs(depth + 1, next);
-        }
-    };
-    dfs(0, {});
-    return combinedNodes;
-}
-
-// 禁止ノードの生成ロジックを分離
-std::vector<std::vector<Node>> generateForbiddenNodes(const Config& config) {
-    if (config.mode == "custom") {
-        // Customモードの禁止ノード生成
-        std::vector<Node> forbiddenNodes;
-        for (const auto& forbidden : config.forbidden_words.value()) {
-            forbiddenNodes.emplace_back(forbidden.first, forbidden.second);
-        }
-        if (forbiddenNodes.empty()) {
-            io::utils::printErrorAndExit("forbidden_words is empty.");
-        }
-        return {forbiddenNodes};
-    } else if (config.mode == "all-patterns") {
-        auto words = combine(ALPHABET.substr(0, config.alphabet_size),
-                             config.forbidden_word_length.value(), true);
-        auto forbiddenNodesList =
-            generateForbiddenNodesList(words, config.forbidden_per_position.value(), config.period);
-
-        return combineForbiddenNodes(forbiddenNodesList);
-    } else {
-        io::utils::printErrorAndExit("Unknown mode '" + config.mode + "'.");
-    }
-    return {};
-}
-
 // JSON設定からグラフを生成する関数
 void generateGraphFromJson(const std::string& configPath) {
     Config config;
@@ -121,7 +55,7 @@ void generateGraphFromJson(const std::string& configPath) {
         io::utils::printErrorAndExit("Failed to load config.");
     }
 
-    auto forbiddenNodes = generateForbiddenNodes(config);
+    auto forbiddenNodes = genNodesFromConfig(config);
 
     std::string baseDirectory = path::genDirPath(config);
 
@@ -204,7 +138,8 @@ int main(int argc, char* argv[]) {
         }
 
         if (format != "edges" && format != "matrix") {
-            io::utils::printErrorAndExit("Invalid format specified. Use 'edges', 'matrix', or 'directory'.");
+            io::utils::printErrorAndExit(
+                "Invalid format specified. Use 'edges', 'matrix', or 'directory'.");
         }
 
         std::vector<std::string> csvFiles;

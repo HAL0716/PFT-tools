@@ -1,9 +1,12 @@
 #pragma once
 
 #include <string>
+#include <utility>  // for std::pair
+#include <vector>
 
-#include "core/Graph.hpp"
 #include "../formats/json/Config.hpp"
+#include "core/Graph.hpp"
+#include "core/Node.hpp"
 
 using Config = io::formats::json::Config;
 
