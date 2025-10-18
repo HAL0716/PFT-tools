@@ -16,7 +16,8 @@ namespace io::input {
 bool readCsv(const std::string& filePath, std::vector<std::vector<std::string>>& csvData) {
     std::ifstream file(filePath);
     if (!io::utils::checkFileOpen(file, filePath)) {
-        io::utils::printErrorAndExit("Failed to open CSV file: " + filePath);
+        std::cerr << "Failed to open CSV file: " << filePath << std::endl;
+        return false;
     }
 
     std::string line;
@@ -37,12 +38,14 @@ bool readCsv(const std::string& filePath, std::vector<std::vector<std::string>>&
 bool readJson(const std::string& filePath, nlohmann::json& jsonData) {
     std::ifstream file(filePath);
     if (!io::utils::checkFileOpen(file, filePath)) {
-        io::utils::printErrorAndExit("Failed to open JSON file: " + filePath);
+        std::cerr << "Failed to open JSON file: " << filePath << std::endl;
+        return false;
     }
     try {
         file >> jsonData;
     } catch (const std::exception& e) {
-        io::utils::printErrorAndExit("Failed to parse JSON file: " + filePath + " - " + e.what());
+        std::cerr << "Failed to parse JSON file: " << filePath << " - " << e.what() << std::endl;
+        return false;
     }
 
     return true;
