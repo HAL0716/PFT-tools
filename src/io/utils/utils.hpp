@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdlib>  // for exit
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -33,6 +34,17 @@ bool checkFileOpen(Stream& file, const std::string& path) {
         return false;
     }
     return true;
+}
+
+/**
+ * @brief エラーメッセージを出力し、プログラムを終了する
+ *
+ * @param message 出力するエラーメッセージ
+ * @note この関数はプログラムを終了します。
+ */
+inline void printErrorAndExit(const std::string& message) {
+    std::cerr << "Error: " << message << std::endl;
+    std::exit(1);
 }
 
 }  // namespace io::utils

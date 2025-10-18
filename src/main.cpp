@@ -20,14 +20,9 @@
 #include "path/PathUtils.hpp"
 #include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
+#include "io/utils/utils.hpp"
 
 using json = nlohmann::json;
-
-// エラーメッセージを一元管理
-void printErrorAndExit(const std::string& message) {
-    std::cerr << "Error: " << message << std::endl;
-    exit(1);
-}
 
 // GraphGeneratorを生成する関数マップ
 static const std::map<std::string, std::function<std::unique_ptr<GraphGenerator>(const Config&)>>
@@ -61,7 +56,7 @@ std::vector<std::vector<std::vector<Node>>> generateForbiddenNodesList(
     for (int i = 0; i < period; ++i) {
         unsigned int n = forbiddenPerPosition[i];
         if (n > words.size()) {
-            printErrorAndExit("forbidden_per_position value exceeds total combinations.");
+            io::utils::printErrorAndExit("forbidden_per_position value exceeds total combinations.");
         }
 
         std::vector<Node> forbiddenNodes;
@@ -103,7 +98,7 @@ std::vector<std::vector<Node>> generateForbiddenNodes(const Config& config) {
             forbiddenNodes.emplace_back(forbidden.first, forbidden.second);
         }
         if (forbiddenNodes.empty()) {
-            printErrorAndExit("forbidden_words is empty.");
+            io::utils::printErrorAndExit("forbidden_words is empty.");
         }
         return {forbiddenNodes};
     } else if (config.mode == "all-patterns") {
@@ -114,7 +109,7 @@ std::vector<std::vector<Node>> generateForbiddenNodes(const Config& config) {
 
         return combineForbiddenNodes(forbiddenNodesList);
     } else {
-        printErrorAndExit("Unknown mode '" + config.mode + "'.");
+        io::utils::printErrorAndExit("Unknown mode '" + config.mode + "'.");
     }
     return {};
 }
@@ -123,7 +118,7 @@ std::vector<std::vector<Node>> generateForbiddenNodes(const Config& config) {
 void generateGraphFromJson(const std::string& configPath) {
     Config config;
     if (!loadConfig(configPath, config)) {
-        printErrorAndExit("Failed to load config.");
+        io::utils::printErrorAndExit("Failed to load config.");
     }
 
     auto forbiddenNodes = generateForbiddenNodes(config);
@@ -166,12 +161,12 @@ void generateGraphFromJson(const std::string& configPath) {
                         continue;
                     }
                 } else {
-                    printErrorAndExit("Unknown output format: " + format);
+                    io::utils::printErrorAndExit("Unknown output format: " + format);
                 }
             }
         }
     } catch (const std::exception& e) {
-        printErrorAndExit(e.what());
+        io::utils::printErrorAndExit(e.what());
     }
 }
 
@@ -209,7 +204,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (format != "edges" && format != "matrix") {
-            printErrorAndExit("Invalid format specified. Use 'edges', 'matrix', or 'directory'.");
+            io::utils::printErrorAndExit("Invalid format specified. Use 'edges', 'matrix', or 'directory'.");
         }
 
         std::vector<std::string> csvFiles;
@@ -218,10 +213,10 @@ int main(int argc, char* argv[]) {
         } else if (extension.empty()) {
             csvFiles = path::getCsvFiles(configPath);
             if (csvFiles.empty()) {
-                printErrorAndExit("No CSV files found in the specified directory.");
+                io::utils::printErrorAndExit("No CSV files found in the specified directory.");
             }
         } else {
-            printErrorAndExit("Unsupported file extension: " + extension);
+            io::utils::printErrorAndExit("Unsupported file extension: " + extension);
         }
 
         for (const auto& csvFile : csvFiles) {
@@ -250,7 +245,7 @@ int main(int argc, char* argv[]) {
             }
         }
     } catch (const std::exception& e) {
-        printErrorAndExit(e.what());
+        io::utils::printErrorAndExit(e.what());
     }
 
     return 0;
