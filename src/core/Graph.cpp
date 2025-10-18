@@ -20,8 +20,6 @@ const std::vector<Node>& Graph::getNodes() const {
 
 // エッジリストを取得
 const std::vector<Edge>& Graph::getEdges(const mode& mode) const {
-    static std::vector<Edge> idEdges;
-
     if (mode == mode::Normal) {
         return edges;
     } else if (mode == mode::ID) {

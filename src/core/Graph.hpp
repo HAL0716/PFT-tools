@@ -33,6 +33,7 @@ class Graph {
     std::unordered_set<std::string> getEdgeLabelSequences(int length) const;
 
    private:
-    std::vector<Node> nodes;  // ノードリスト
-    std::vector<Edge> edges;  // エッジリスト
+    std::vector<Node> nodes;            // ノードリスト
+    std::vector<Edge> edges;            // エッジリスト
+    mutable std::vector<Edge> idEdges;  // IDモード用のエッジキャッシュ
 };
