@@ -8,6 +8,8 @@
 
 namespace path {
 
+using Config = io::formats::json::Config;
+
 // 指定されたディレクトリ内のすべてのCSVファイルを取得する関数
 std::vector<std::string> getCsvFiles(const std::string& directoryPath);
 

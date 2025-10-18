@@ -8,13 +8,13 @@
 #include "../formats/json/json.hpp"
 
 bool loadConfig(const std::string& filePath, Config& config) {
-    nlohmann::json jsonConfig;
-    if (!json::read(filePath, jsonConfig)) {
+    io::formats::json::json jsonData;
+    if (!io::formats::json::read(filePath, jsonData)) {
         return false;
     }
 
     try {
-        config = jsonConfig.get<Config>();
+        config = jsonData.get<Config>();
         config.validate();
     } catch (const std::exception& e) {
         std::cerr << "Error: Invalid config: " << e.what() << std::endl;
