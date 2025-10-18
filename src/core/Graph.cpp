@@ -38,8 +38,6 @@ const std::vector<Edge>& Graph::getEdges(const mode& mode) const {
             idEdges.emplace_back(src, tgt, edge.getLabel());
         }
         return idEdges;
-    } else {
-        throw std::invalid_argument("Invalid mode for getEdges");
     }
 }
 
