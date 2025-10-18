@@ -3,13 +3,15 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
 
-namespace csv {
+#include "io/utils/utils.hpp"
 
-bool read(const std::string& filePath, std::vector<std::vector<std::string>>& csvData) {
+namespace io::formats::csv {
+
+bool read(const std::string& filePath, CsvData& csvData) {
     std::ifstream file(filePath);
-    if (!file) {
-        std::cerr << "Error: Could not open file: " << filePath << std::endl;
+    if (!io::utils::checkFileOpen(file, filePath)) {
         return false;
     }
 
@@ -29,17 +31,17 @@ bool read(const std::string& filePath, std::vector<std::vector<std::string>>& cs
     return true;
 }
 
-bool write(const std::string& filePath, const std::vector<std::vector<std::string>>& csvData) {
+bool write(const std::string& filePath, const CsvData& csvData) {
     std::ofstream file(filePath);
-    if (!file) {
-        std::cerr << "Error: Could not open file for writing: " << filePath << std::endl;
+    if (!io::utils::checkFileOpen(file, filePath)) {
         return false;
     }
 
     for (const auto& row : csvData) {
         for (size_t i = 0; i < row.size(); ++i) {
-            if (i > 0)
+            if (i > 0) {
                 file << ",";
+            }
             file << row[i];
         }
         file << "\n";
@@ -48,4 +50,4 @@ bool write(const std::string& filePath, const std::vector<std::vector<std::strin
     return true;
 }
 
-}  // namespace csv
+}  // namespace io::formats::csv
