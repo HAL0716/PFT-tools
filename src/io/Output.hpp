@@ -1,40 +1,30 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include "core/Graph.hpp"
+#include "core/Node.hpp"
+#include "nlohmann/json.hpp"
 
-namespace io::output {
+using CsvData = std::vector<std::vector<std::string>>;
+using json = nlohmann::json;
 
-/**
- * @brief エッジリストを指定されたファイルに保存する
- *
- * @param filePath 出力先ファイルのパス
- * @param graph 入力グラフオブジェクト
- * @return true 保存に成功した場合
- * @return false 保存に失敗した場合
- */
-bool edges(const std::string& filePath, const Graph& graph);
+// ユーティリティ関数
+bool write(const std::string& path, const std::string& data);
+bool exec(const std::string& cmd);
 
-/**
- * @brief 隣接行列を指定されたファイルに保存する
- *
- * @param filePath 出力先ファイルのパス
- * @param graph 入力グラフオブジェクト
- * @return true 保存に成功した場合
- * @return false 保存に失敗した場合
- */
-bool adjacencyMatrix(const std::string& filePath, const Graph& graph);
+// CSV関連
+bool writeCsv(const std::string& filePath, const CsvData& csvData);
+bool writeEdgesCsv(const std::string& filePath, const Graph& graph);
+bool writeMatrixCsv(const std::string& filePath, const Graph& graph);
+bool writeSeqCsv(const std::string& filePath, const Graph& graph, unsigned int length);
 
-/**
- * @brief 許可されたシーケンスを指定されたファイルに保存する
- *
- * @param filePath 出力先ファイルのパス
- * @param graph 入力グラフオブジェクト
- * @param length シーケンスの長さ
- * @return true 保存に成功した場合
- * @return false 保存に失敗した場合
- */
-bool sequences(const std::string& filePath, const Graph& graph, unsigned int length);
+// JSON関連
+bool writeJson(const std::string& filePath, const json& jsonData);
 
-}  // namespace io::output
+// Graphviz関連
+bool writeDot(const std::string& path, const Graph& graph);
+bool dotToTeX(const std::string& dir, const std::vector<Node>& nodes);
+bool texToPDF(const std::string& dir, const std::vector<Node>& nodes);
+bool pdfToPNG(const std::string& dir, const std::vector<Node>& nodes);

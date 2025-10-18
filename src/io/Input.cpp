@@ -1,17 +1,54 @@
 #include "Input.hpp"
 
+#include <fstream>
 #include <iostream>
+#include <sstream>
 #include <unordered_set>
 #include <vector>
 
-#include "csv.hpp"
-#include "json.hpp"
+#include "io/utils.hpp"
+#include "nlohmann/json.hpp"
 
-namespace io::input {
+// CSVファイルを読み込む関数
+bool readCsv(const std::string& filePath, std::vector<std::vector<std::string>>& csvData) {
+    std::ifstream file(filePath);
+    if (!io::utils::checkFileOpen(file, filePath)) {
+        io::utils::printErrorAndExit("Failed to open CSV file: " + filePath);
+    }
 
-bool config(const std::string& filePath, Config& config) {
-    io::formats::json::json jsonData;
-    if (!io::formats::json::read(filePath, jsonData)) {
+    std::string line;
+    while (std::getline(file, line)) {
+        std::vector<std::string> row;
+        std::stringstream lineStream(line);
+        std::string cell;
+        while (std::getline(lineStream, cell, ',')) {
+            row.push_back(cell);
+        }
+        csvData.push_back(row);
+    }
+
+    return true;
+}
+
+// JSONファイルを読み込む関数
+bool readJson(const std::string& filePath, nlohmann::json& jsonData) {
+    std::ifstream file(filePath);
+    if (!io::utils::checkFileOpen(file, filePath)) {
+        io::utils::printErrorAndExit("Failed to open JSON file: " + filePath);
+    }
+    try {
+        file >> jsonData;
+    } catch (const std::exception& e) {
+        io::utils::printErrorAndExit("Failed to parse JSON file: " + filePath + " - " + e.what());
+    }
+
+    return true;
+}
+
+// Config関連
+bool readConfigJson(const std::string& filePath, Config& config) {
+    nlohmann::json jsonData;
+    if (!readJson(filePath, jsonData)) {
         return false;
     }
 
@@ -30,9 +67,10 @@ bool config(const std::string& filePath, Config& config) {
     return true;
 }
 
-bool edges(const std::string& filePath, Graph& graph) {
+// Edges関連
+bool readEdgesCSV(const std::string& filePath, Graph& graph) {
     std::vector<std::vector<std::string>> csvData;
-    if (!io::formats::csv::read(filePath, csvData)) {
+    if (!readCsv(filePath, csvData)) {
         return false;
     }
 
@@ -59,9 +97,10 @@ bool edges(const std::string& filePath, Graph& graph) {
     return true;
 }
 
-bool adjacencyMatrix(const std::string& filePath, Graph& graph) {
+// Adjacency Matrix関連
+bool readMatrixCSV(const std::string& filePath, Graph& graph) {
     std::vector<std::vector<std::string>> csvData;
-    if (!io::formats::csv::read(filePath, csvData)) {
+    if (!readCsv(filePath, csvData)) {
         return false;
     }
 
@@ -84,5 +123,3 @@ bool adjacencyMatrix(const std::string& filePath, Graph& graph) {
 
     return true;
 }
-
-}  // namespace io::input
