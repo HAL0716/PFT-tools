@@ -1,11 +1,11 @@
-#include "io/formats/csv/csv.hpp"
+#include "io/csv.hpp"
 
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 
-#include "io/utils/utils.hpp"
+#include "io/utils.hpp"
 #include "path/PathUtils.hpp"
 
 namespace io::formats::csv {

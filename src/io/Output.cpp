@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "io/formats/csv/csv.hpp"
-#include "io/formats/csv/format.hpp"
+#include "csv.hpp"
+#include "format.hpp"
 
 namespace io::output {
 

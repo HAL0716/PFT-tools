@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 
-#include "io/utils/utils.hpp"
+#include "utils.hpp"
 
 namespace io::formats::json {
 

@@ -6,7 +6,7 @@
 
 #include "core/Graph.hpp"
 #include "core/Node.hpp"
-#include "io/formats/json/Config.hpp"
+#include "Config.hpp"
 
 namespace io::input {
 

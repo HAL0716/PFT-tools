@@ -12,13 +12,13 @@
 #include "core/Graph.hpp"
 #include "core/Node.hpp"
 #include "core/constants.hpp"
-#include "io/formats/csv/csv.hpp"
-#include "io/formats/json/Config.hpp"
-#include "io/input/Input.hpp"
-#include "io/output/Output.hpp"
-#include "io/utils/ForbiddenNodes.hpp"
-#include "io/utils/utils.hpp"
-#include "io/visualization/Graphviz.hpp"
+#include "io/ForbiddenNodes.hpp"
+#include "io/Graphviz.hpp"
+#include "io/Input.hpp"
+#include "io/Output.hpp"
+#include "io/csv.hpp"
+#include "io/json.hpp"
+#include "io/utils.hpp"
 #include "path/PathUtils.hpp"
 #include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
@@ -74,10 +74,12 @@ void generateGraphFromJson(const std::string& configPath) {
 
             for (const auto& format : config.output.formats) {
                 if (format == "edges") {
-                    const std::string filePath = path::genFilePath(baseDirectory, forbiddenCombinations, "edges");
+                    const std::string filePath =
+                        path::genFilePath(baseDirectory, forbiddenCombinations, "edges");
                     io::output::edges(filePath, graph);
                 } else if (format == "matrix") {
-                    const std::string filePath = path::genFilePath(baseDirectory, forbiddenCombinations, "matrix");
+                    const std::string filePath =
+                        path::genFilePath(baseDirectory, forbiddenCombinations, "matrix");
                     io::output::adjacencyMatrix(filePath, graph);
                 } else if (format == "dot") {
                     if (!graphviz::saveDot(baseDirectory, forbiddenCombinations, graph)) {

@@ -4,8 +4,8 @@
 #include <unordered_set>
 #include <vector>
 
-#include "io/formats/csv/csv.hpp"
-#include "io/formats/json/json.hpp"
+#include "csv.hpp"
+#include "json.hpp"
 
 namespace io::input {
 

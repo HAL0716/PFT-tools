@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "../formats/json/Config.hpp"
+#include "io/Config.hpp"
 #include "core/Node.hpp"
 
 using Config = io::formats::json::Config;
