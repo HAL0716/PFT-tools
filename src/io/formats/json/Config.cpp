@@ -1,11 +1,30 @@
 #include "Config.hpp"
 
-void from_json(const nlohmann::json& j, OutputConfig& o) {
+#include <stdexcept>  // for std::invalid_argument
+#include <string>     // for std::string
+#include <utility>    // for std::pair
+#include <vector>     // for std::vector
+
+namespace io::formats::json {
+
+/**
+ * @brief JSONオブジェクトからOutputConfig構造体を生成する
+ *
+ * @param j 入力JSONオブジェクト
+ * @param o 出力用のOutputConfig構造体
+ */
+void from_json(const json& j, OutputConfig& o) {
     j.at("formats").get_to(o.formats);
     j.at("directory").get_to(o.directory);
 }
 
-void from_json(const nlohmann::json& j, Config& c) {
+/**
+ * @brief JSONオブジェクトからConfig構造体を生成する
+ *
+ * @param j 入力JSONオブジェクト
+ * @param c 出力用のConfig構造体
+ */
+void from_json(const json& j, Config& c) {
     j.at("mode").get_to(c.mode);
     j.at("algorithm").get_to(c.algorithm);
     j.at("sink_less").get_to(c.sink_less);
@@ -26,6 +45,11 @@ void from_json(const nlohmann::json& j, Config& c) {
     j.at("output").get_to(c.output);
 }
 
+/**
+ * @brief Config構造体の内容を検証する
+ *
+ * @throws std::invalid_argument モードに応じた必須フィールドが不足している場合
+ */
 void Config::validate() const {
     if (mode == "custom") {
         if (!forbidden_words.has_value()) {
@@ -44,3 +68,5 @@ void Config::validate() const {
         throw std::invalid_argument("Invalid mode: " + mode);
     }
 }
+
+}  // namespace io::formats::json

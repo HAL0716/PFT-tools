@@ -6,6 +6,10 @@
 
 #include "nlohmann/json.hpp"
 
+namespace io::formats::json {
+
+using json = nlohmann::json;
+
 struct OutputConfig {
     std::vector<std::string> formats;
     std::string directory;
@@ -28,5 +32,7 @@ struct Config {
 };
 
 // JSON とのマッピング
-void from_json(const nlohmann::json& j, OutputConfig& o);
-void from_json(const nlohmann::json& j, Config& c);
+void from_json(const json& j, OutputConfig& o);
+void from_json(const json& j, Config& c);
+
+}  // namespace io::formats::json
