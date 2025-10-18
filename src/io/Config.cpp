@@ -1,11 +1,11 @@
 #include "Config.hpp"
 
-#include <stdexcept>  // for std::invalid_argument
-#include <string>     // for std::string
-#include <utility>    // for std::pair
-#include <vector>     // for std::vector
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
-namespace io::formats::json {
+namespace io::type {
 
 void Config::validate() const {
     if (mode == "custom") {
@@ -26,16 +26,16 @@ void Config::validate() const {
     }
 }
 
-void Config::extendWords(std::vector<std::pair<std::string, unsigned int>>& words,
-                         unsigned int targetLen, const std::string& alphabet) const {
-    std::vector<std::pair<std::string, unsigned int>> extended;
+void Config::extendWords(std::vector<Word>& words, unsigned int targetLen,
+                         const std::string& alphabet) const {
+    std::vector<Word> extended;
 
     for (const auto& word : words) {
-        if (word.first.size() == targetLen) {
+        if (word.label.size() == targetLen) {
             extended.push_back(word);
         } else {
             for (char c : alphabet) {
-                extended.emplace_back(word.first + c, word.second);
+                extended.emplace_back(Word{word.label + c, word.phase});
             }
         }
     }
@@ -51,25 +51,22 @@ void Config::formatForDeBruijn() {
     auto& words = *forbidden_words;
     std::string alphabet = ALPHABET.substr(0, alphabet_size);
 
-    // 最大長を取得
     auto getMaxLength = [](const auto& ws) {
         return std::max_element(
                    ws.begin(), ws.end(),
-                   [](const auto& a, const auto& b) { return a.first.size() < b.first.size(); })
-            ->first.size();
+                   [](const auto& a, const auto& b) { return a.label.size() < b.label.size(); })
+            ->label.size();
     };
 
-    // 最短長を取得
     auto getMinLength = [](const auto& ws) {
         return std::min_element(
                    ws.begin(), ws.end(),
-                   [](const auto& a, const auto& b) { return a.first.size() < b.first.size(); })
-            ->first.size();
+                   [](const auto& a, const auto& b) { return a.label.size() < b.label.size(); })
+            ->label.size();
     };
 
     forbidden_word_length = getMaxLength(words);
 
-    // 長さを揃える
     while (forbidden_word_length != getMinLength(words)) {
         extendWords(words, *forbidden_word_length, alphabet);
     }
@@ -92,13 +89,17 @@ void from_json(const json& j, Config& c) {
         c.forbidden_word_length = j.at("forbidden_word_length").get<unsigned int>();
     }
     if (j.contains("forbidden_words")) {
-        c.forbidden_words =
-            j.at("forbidden_words").get<std::vector<std::pair<std::string, unsigned int>>>();
+        std::vector<Word> processedWords;
+        for (const auto& item : j.at("forbidden_words")) {
+            processedWords.push_back(Word{item[0].get<std::string>(), item[1].get<unsigned int>()});
+        }
+        c.forbidden_words = std::move(processedWords);
     }
     if (j.contains("forbidden_per_position")) {
         c.forbidden_per_position = j.at("forbidden_per_position").get<std::vector<unsigned int>>();
     }
+
     j.at("output").get_to(c.output);
 }
 
-}  // namespace io::formats::json
+}  // namespace io::type

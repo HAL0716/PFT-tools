@@ -7,13 +7,9 @@
 #include "core/Graph.hpp"
 #include "core/Node.hpp"
 
-using Config = io::formats::json::Config;
+namespace io::input {
 
-// CSVファイルを読み込む関数
-bool readCsv(const std::string& filePath, std::vector<std::vector<std::string>>& csvData);
-
-// JSONファイルを読み込む関数
-bool readJson(const std::string& filePath, nlohmann::json& jsonData);
+using Config = io::type::Config;
 
 // Config関連
 bool readConfigJson(const std::string& filePath, Config& config);
@@ -23,3 +19,8 @@ bool readEdgesCSV(const std::string& filePath, Graph& graph);
 
 // Adjacency Matrix関連
 bool readMatrixCSV(const std::string& filePath, Graph& graph);
+
+// Configからノードリストを生成
+std::vector<std::vector<Node>> genNodesFromConfig(const Config& config);
+
+}  // namespace io::input
