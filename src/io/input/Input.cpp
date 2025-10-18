@@ -16,6 +16,10 @@ bool loadConfig(const std::string& filePath, Config& config) {
     try {
         config = jsonData.get<Config>();
         config.validate();
+
+        if (config.mode == "custom" && config.algorithm == "DeBruijn") {
+            config.formatForDeBruijn();
+        }
     } catch (const std::exception& e) {
         std::cerr << "Error: Invalid config: " << e.what() << std::endl;
         return false;

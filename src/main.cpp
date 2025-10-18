@@ -94,60 +94,9 @@ std::vector<std::vector<Node>> combineForbiddenNodes(
     return combinedNodes;
 }
 
-// 単語を指定長さまで拡張する
-void extendWords(std::vector<std::pair<std::string, unsigned int>>& words, unsigned int targetLen,
-                 const std::string& alphabet) {
-    std::vector<std::pair<std::string, unsigned int>> extended;
-
-    for (const auto& word : words) {
-        if (word.first.size() == targetLen) {
-            extended.push_back(word);
-        } else {
-            for (char c : alphabet) {
-                extended.emplace_back(word.first + c, word.second);
-            }
-        }
-    }
-
-    words = std::move(extended);
-}
-
-// 禁止語リスト内の単語長を揃える
-void formatForDeBruijn(Config& config) {
-    auto& words = *config.forbidden_words;
-    std::string alphabet = ALPHABET.substr(0, config.alphabet_size);
-
-    // 最大長を取得
-    auto getMaxLength = [](const auto& ws) {
-        return std::max_element(
-                   ws.begin(), ws.end(),
-                   [](const auto& a, const auto& b) { return a.first.size() < b.first.size(); })
-            ->first.size();
-    };
-
-    // 最短長を取得
-    auto getMinLength = [](const auto& ws) {
-        return std::min_element(
-                   ws.begin(), ws.end(),
-                   [](const auto& a, const auto& b) { return a.first.size() < b.first.size(); })
-            ->first.size();
-    };
-
-    config.forbidden_word_length = getMaxLength(words);
-
-    // 長さを揃える
-    while (config.forbidden_word_length != getMinLength(words)) {
-        extendWords(words, *config.forbidden_word_length, alphabet);
-    }
-}
-
 // 禁止ノードの生成ロジックを分離
 std::vector<std::vector<Node>> generateForbiddenNodes(const Config& config) {
     if (config.mode == "custom") {
-        if (config.algorithm == "DeBruijn") {
-            formatForDeBruijn(const_cast<Config&>(config));
-        }
-
         // Customモードの禁止ノード生成
         std::vector<Node> forbiddenNodes;
         for (const auto& forbidden : config.forbidden_words.value()) {
