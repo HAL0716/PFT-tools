@@ -12,17 +12,15 @@
 #include "core/Graph.hpp"
 #include "core/Node.hpp"
 #include "core/constants.hpp"
-#include "io/ForbiddenNodes.hpp"
-#include "io/Graphviz.hpp"
 #include "io/Input.hpp"
 #include "io/Output.hpp"
-#include "io/csv.hpp"
-#include "io/json.hpp"
 #include "io/utils.hpp"
+#include "io/Config.hpp"
 #include "path/PathUtils.hpp"
 #include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
 
+using Config = io::type::Config;
 using json = nlohmann::json;
 
 // GraphGeneratorを生成する関数マップ
@@ -50,12 +48,12 @@ std::unique_ptr<GraphGenerator> createGraphGenerator(const Config& config) {
 
 // JSON設定からグラフを生成する関数
 void generateGraphFromJson(const std::string& configPath) {
-    Config config;
-    if (!io::input::config(configPath, config)) {
+    io::type::Config config;
+    if (!io::input::readConfigJson(configPath, config)) {
         io::utils::printErrorAndExit("Failed to load config.");
     }
 
-    auto forbiddenNodes = genNodesFromConfig(config);
+    auto forbiddenNodes = io::input::genNodesFromConfig(config);
 
     std::string baseDirectory = path::genDirPath(config);
 
@@ -76,26 +74,37 @@ void generateGraphFromJson(const std::string& configPath) {
                 if (format == "edges") {
                     const std::string filePath =
                         path::genFilePath(baseDirectory, forbiddenCombinations, "edges");
-                    io::output::edges(filePath, graph);
+                    io::output::writeEdgesCsv(filePath, graph);
                 } else if (format == "matrix") {
                     const std::string filePath =
                         path::genFilePath(baseDirectory, forbiddenCombinations, "matrix");
-                    io::output::adjacencyMatrix(filePath, graph);
+                    io::output::writeMatrixCsv(filePath, graph);
                 } else if (format == "dot") {
-                    if (!graphviz::saveDot(baseDirectory, forbiddenCombinations, graph)) {
+                    const std::string filePath =
+                        path::genFilePath(baseDirectory, forbiddenCombinations, "dot", "dot");
+                    if (!io::output::writeDot(filePath, graph)) {
                         continue;
                     }
                 } else if (format == "png") {
-                    if (!graphviz::saveDot(baseDirectory, forbiddenCombinations, graph)) {
+                    const std::string dotFilePath =
+                        path::genFilePath(baseDirectory, forbiddenCombinations, "dot", "dot");
+                    const std::string texFilePath =
+                        path::genFilePath(baseDirectory, forbiddenCombinations, "tex", "tex");
+                    const std::string pdfFilePath =
+                        path::genFilePath(baseDirectory, forbiddenCombinations, "pdf", "pdf");
+                    const std::string pngFilePath = path::genFilePath(
+                        baseDirectory, forbiddenCombinations, "png", "png");
+
+                    if (!io::output::writeDot(dotFilePath, graph)) {
                         continue;
                     }
-                    if (!graphviz::cvtDot2TeX(baseDirectory, forbiddenCombinations)) {
+                    if (!io::output::dotToTeX(dotFilePath, texFilePath)) {
                         continue;
                     }
-                    if (!graphviz::cvtTex2PDF(baseDirectory, forbiddenCombinations)) {
+                    if (!io::output::texToPDF(texFilePath, pdfFilePath)) {
                         continue;
                     }
-                    if (!graphviz::cvtPDF2PNG(baseDirectory, forbiddenCombinations)) {
+                    if (!io::output::pdfToPNG(pdfFilePath, pngFilePath)) {
                         continue;
                     }
                 } else {
@@ -161,11 +170,11 @@ int main(int argc, char* argv[]) {
         for (const auto& csvFile : csvFiles) {
             Graph graph;
             if (format == "edges") {
-                if (!io::input::edges(csvFile, graph)) {
+                if (!io::input::readEdgesCSV(csvFile, graph)) {
                     continue;
                 }
             } else if (format == "matrix") {
-                if (!io::input::adjacencyMatrix(csvFile, graph)) {
+                if (!io::input::readMatrixCSV(csvFile, graph)) {
                     continue;
                 }
             }
@@ -174,7 +183,7 @@ int main(int argc, char* argv[]) {
                 std::string directory = path::getDirectory(csvFile, 2);
                 std::string fileName = path::getFileName(csvFile);
                 std::string filePath = directory + "/sequences/" + fileName;
-                io::output::sequences(filePath, graph, sequencesLength);
+                io::output::writeSeqCsv(filePath, graph, sequencesLength);
             }
 
             if (maxEigenvalue) {
