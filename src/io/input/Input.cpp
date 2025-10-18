@@ -4,10 +4,12 @@
 #include <unordered_set>
 #include <vector>
 
-#include "../formats/csv/csv.hpp"
-#include "../formats/json/json.hpp"
+#include "io/formats/csv/csv.hpp"
+#include "io/formats/json/json.hpp"
 
-bool loadConfig(const std::string& filePath, Config& config) {
+namespace io::input {
+
+bool config(const std::string& filePath, Config& config) {
     io::formats::json::json jsonData;
     if (!io::formats::json::read(filePath, jsonData)) {
         return false;
@@ -28,7 +30,7 @@ bool loadConfig(const std::string& filePath, Config& config) {
     return true;
 }
 
-bool loadEdges(const std::string& filePath, Graph& graph) {
+bool edges(const std::string& filePath, Graph& graph) {
     std::vector<std::vector<std::string>> csvData;
     if (!io::formats::csv::read(filePath, csvData)) {
         return false;
@@ -57,7 +59,7 @@ bool loadEdges(const std::string& filePath, Graph& graph) {
     return true;
 }
 
-bool loadAdjacencyMatrix(const std::string& filePath, Graph& graph) {
+bool adjacencyMatrix(const std::string& filePath, Graph& graph) {
     std::vector<std::vector<std::string>> csvData;
     if (!io::formats::csv::read(filePath, csvData)) {
         return false;
@@ -82,3 +84,5 @@ bool loadAdjacencyMatrix(const std::string& filePath, Graph& graph) {
 
     return true;
 }
+
+}  // namespace io::input
