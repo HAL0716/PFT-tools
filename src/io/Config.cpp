@@ -89,8 +89,18 @@ void from_json(const json& j, Config& c) {
         c.forbidden_word_length = j.at("forbidden_word_length").get<unsigned int>();
     }
     if (j.contains("forbidden_words")) {
+        auto isValidWord = [](const json& item) {
+            return item.is_array() && item.size() == 2 && item[0].is_string() &&
+                   item[1].is_number_unsigned();
+        };
+
         std::vector<Word> processedWords;
         for (const auto& item : j.at("forbidden_words")) {
+            if (!isValidWord(item)) {
+                throw std::invalid_argument(
+                    "Invalid format for forbidden_words. Each item must be [string, unsigned "
+                    "int].");
+            }
             processedWords.push_back(Word{item[0].get<std::string>(), item[1].get<unsigned int>()});
         }
         c.forbidden_words = std::move(processedWords);
