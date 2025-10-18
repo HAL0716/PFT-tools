@@ -58,3 +58,5 @@ config/*
 
 #resultsフォルダ
 results/
+
+for_Copilot.txt
