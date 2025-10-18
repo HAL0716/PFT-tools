@@ -4,9 +4,11 @@
 #include <vector>
 
 #include "core/Node.hpp"
-#include "json/Config.hpp"
+#include "io/Config.hpp"
 
 namespace path {
+
+using Config = io::type::Config;
 
 // 指定されたディレクトリ内のすべてのCSVファイルを取得する関数
 std::vector<std::string> getCsvFiles(const std::string& directoryPath);
