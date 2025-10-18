@@ -51,7 +51,7 @@ std::unique_ptr<GraphGenerator> createGraphGenerator(const Config& config) {
 // JSON設定からグラフを生成する関数
 void generateGraphFromJson(const std::string& configPath) {
     Config config;
-    if (!loadConfig(configPath, config)) {
+    if (!io::input::config(configPath, config)) {
         io::utils::printErrorAndExit("Failed to load config.");
     }
 
@@ -74,9 +74,11 @@ void generateGraphFromJson(const std::string& configPath) {
 
             for (const auto& format : config.output.formats) {
                 if (format == "edges") {
-                    saveEdges(baseDirectory, forbiddenCombinations, graph);
+                    const std::string filePath = path::genFilePath(baseDirectory, forbiddenCombinations, "edges");
+                    io::output::edges(filePath, graph);
                 } else if (format == "matrix") {
-                    saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph);
+                    const std::string filePath = path::genFilePath(baseDirectory, forbiddenCombinations, "matrix");
+                    io::output::adjacencyMatrix(filePath, graph);
                 } else if (format == "dot") {
                     if (!graphviz::saveDot(baseDirectory, forbiddenCombinations, graph)) {
                         continue;
@@ -157,22 +159,20 @@ int main(int argc, char* argv[]) {
         for (const auto& csvFile : csvFiles) {
             Graph graph;
             if (format == "edges") {
-                if (!loadEdges(csvFile, graph)) {
+                if (!io::input::edges(csvFile, graph)) {
                     continue;
                 }
             } else if (format == "matrix") {
-                if (!loadAdjacencyMatrix(csvFile, graph)) {
+                if (!io::input::adjacencyMatrix(csvFile, graph)) {
                     continue;
                 }
             }
 
             if (sequencesLength > 0 && format == "edges") {
-                const auto& sequences = graph.getEdgeLabelSequences(sequencesLength);
-
                 std::string directory = path::getDirectory(csvFile, 2);
                 std::string fileName = path::getFileName(csvFile);
                 std::string filePath = directory + "/sequences/" + fileName;
-                saveSequences(filePath, sequences);
+                io::output::sequences(filePath, graph, sequencesLength);
             }
 
             if (maxEigenvalue) {

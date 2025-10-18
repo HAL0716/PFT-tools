@@ -1,22 +1,40 @@
 #pragma once
 
 #include <string>
-#include <unordered_set>
-#include <vector>
 
 #include "core/Graph.hpp"
-#include "core/Node.hpp"
-#include "nlohmann/json.hpp"
 
-using json = nlohmann::json;
+namespace io::output {
 
-// エッジを指定されたディレクトリに保存する関数
-void saveEdges(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
-               const Graph& graph);
+/**
+ * @brief エッジリストを指定されたファイルに保存する
+ *
+ * @param filePath 出力先ファイルのパス
+ * @param graph 入力グラフオブジェクト
+ * @return true 保存に成功した場合
+ * @return false 保存に失敗した場合
+ */
+bool edges(const std::string& filePath, const Graph& graph);
 
-// 隣接行列を指定されたディレクトリに保存する関数
-void saveAdjacencyMatrix(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
-                         const Graph& graph);
+/**
+ * @brief 隣接行列を指定されたファイルに保存する
+ *
+ * @param filePath 出力先ファイルのパス
+ * @param graph 入力グラフオブジェクト
+ * @return true 保存に成功した場合
+ * @return false 保存に失敗した場合
+ */
+bool adjacencyMatrix(const std::string& filePath, const Graph& graph);
 
-// エッジラベル系列を指定されたディレクトリに保存する関数
-void saveSequences(const std::string& filePath, const std::unordered_set<std::string>& sequences);
+/**
+ * @brief 許可されたシーケンスを指定されたファイルに保存する
+ *
+ * @param filePath 出力先ファイルのパス
+ * @param graph 入力グラフオブジェクト
+ * @param length シーケンスの長さ
+ * @return true 保存に成功した場合
+ * @return false 保存に失敗した場合
+ */
+bool sequences(const std::string& filePath, const Graph& graph, unsigned int length);
+
+}  // namespace io::output

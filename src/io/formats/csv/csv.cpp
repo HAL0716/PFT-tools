@@ -6,9 +6,11 @@
 #include <stdexcept>
 
 #include "io/utils/utils.hpp"
+#include "path/PathUtils.hpp"
 
 namespace io::formats::csv {
 
+// CSVファイルを読み込む関数
 bool read(const std::string& filePath, CsvData& csvData) {
     std::ifstream file(filePath);
     if (!io::utils::checkFileOpen(file, filePath)) {
@@ -31,7 +33,10 @@ bool read(const std::string& filePath, CsvData& csvData) {
     return true;
 }
 
+// CSVデータをファイルに書き込む関数
 bool write(const std::string& filePath, const CsvData& csvData) {
+    path::genDirectory(filePath);
+
     std::ofstream file(filePath);
     if (!io::utils::checkFileOpen(file, filePath)) {
         return false;

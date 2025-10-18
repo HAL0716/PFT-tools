@@ -44,4 +44,17 @@ CsvData adjacencyMatrix(const Graph& graph) {
     return csvData;
 }
 
+CsvData sequences(const Graph& graph, unsigned int length) {
+    // エッジラベルシーケンスを取得
+    auto sequencesSet = graph.getEdgeLabelSequences(length);
+
+    // CSVデータ形式に変換
+    CsvData csvData;
+    for (const auto& sequence : sequencesSet) {
+        csvData.push_back({sequence});
+    }
+
+    return csvData;
+}
+
 }  // namespace io::formats::csv::format

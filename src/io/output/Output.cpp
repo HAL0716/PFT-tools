@@ -1,58 +1,44 @@
 #include "Output.hpp"
 
-#include <algorithm>
-#include <fstream>
 #include <iostream>
-#include <sstream>
-#include <unordered_set>
-#include <vector>
 
-#include "../formats/csv/format.hpp"
-#include "path/PathUtils.hpp"
+#include "io/formats/csv/csv.hpp"
+#include "io/formats/csv/format.hpp"
 
-void saveEdges(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
-               const Graph& graph) {
-    std::string filePath = path::genFilePath(baseDirectory, forbiddenNodes, "edges");
+namespace io::output {
 
+namespace {
+
+using CsvData = io::formats::csv::CsvData;
+
+// CSVデータを書き込む共通関数
+bool writeCsvData(const std::string& filePath, const CsvData& csvData) {
+    if (io::formats::csv::write(filePath, csvData)) {
+        std::cout << "Successfully wrote CSV data to " << filePath << std::endl;
+        return true;
+    } else {
+        std::cerr << "Failed to write CSV data to file: " << filePath << std::endl;
+        return false;
+    }
+}
+}  // unnamed namespace
+
+// エッジリストを保存する関数
+bool edges(const std::string& filePath, const Graph& graph) {
     const auto& csvData = io::formats::csv::format::edges(graph);
-
-    if (io::formats::csv::write(filePath, csvData)) {
-        std::cout << "Saved file: " << filePath << std::endl;
-    } else {
-        throw std::ios_base::failure("Failed to write CSV data to file: " + filePath);
-    }
+    return writeCsvData(filePath, csvData);
 }
 
-void saveAdjacencyMatrix(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
-                         const Graph& graph) {
-    std::string filePath = path::genFilePath(baseDirectory, forbiddenNodes, "adjacency_matrix");
-
+// 隣接行列を保存する関数
+bool adjacencyMatrix(const std::string& filePath, const Graph& graph) {
     const auto& csvData = io::formats::csv::format::adjacencyMatrix(graph);
-
-    if (io::formats::csv::write(filePath, csvData)) {
-        std::cout << "Saved file: " << filePath << std::endl;
-    } else {
-        throw std::ios_base::failure("Failed to write CSV data to file: " + filePath);
-    }
+    return writeCsvData(filePath, csvData);
 }
 
-// エッジラベル系列を指定されたディレクトリに保存する関数
-void saveSequences(const std::string& filePath, const std::unordered_set<std::string>& sequences) {
-    // ソートして保存
-    std::vector<std::string> sortedSequences(sequences.begin(), sequences.end());
-    std::sort(sortedSequences.begin(), sortedSequences.end());
-
-    std::string csvData;
-    for (const auto& sequence : sortedSequences) {
-        csvData += sequence + "\n";
-    }
-
-    path::genDirectory(filePath);
-    std::ofstream outFile(filePath);
-    if (!outFile) {
-        throw std::ios_base::failure("Failed to open file for writing: " + filePath);
-    }
-    outFile << csvData;
-    outFile.close();
-    std::cout << "Saved file: " << filePath << std::endl;
+// 許可されたシーケンスを保存する関数
+bool sequences(const std::string& filePath, const Graph& graph, unsigned int length) {
+    const auto& csvData = io::formats::csv::format::sequences(graph, length);
+    return writeCsvData(filePath, csvData);
 }
+
+}  // namespace io::output

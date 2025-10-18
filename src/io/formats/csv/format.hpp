@@ -26,4 +26,12 @@ CsvData edges(const Graph& graph);
  */
 CsvData adjacencyMatrix(const Graph& graph);
 
+/**
+ * @brief グラフの許可系列をCSV形式のデータに変換する
+ *
+ * @param graph シーケンスを取得する対象のグラフ
+ * @return data CSV形式のエッジラベルシーケンスデータ
+ */
+CsvData sequences(const Graph& graph, unsigned int length);
+
 }  // namespace io::formats::csv::format
