@@ -17,10 +17,6 @@ std::unordered_map<Node, size_t> genNodeIndexMap(const Graph& graph);
 bool saveDot(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
              const Graph& graph);
 std::string cvtGraph2Dot(const Graph& graph);
-void writeHeader(std::ostringstream& content);
-void writeVertices(std::ostringstream& content, const std::unordered_map<Node, size_t>& toIdx);
-void writeEdges(std::ostringstream& content, const Graph& graph,
-                const std::unordered_map<Node, size_t>& toIdx);
 
 // ファイル変換関連の関数
 bool executeCommand(const std::string& command, const std::string& errorMessage);

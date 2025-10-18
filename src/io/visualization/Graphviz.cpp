@@ -19,17 +19,7 @@
 
 namespace graphviz {
 
-// ヘルパー関数: ノードインデックスマッピングを生成
-std::unordered_map<Node, size_t> genNodeIndexMap(const Graph& graph) {
-    std::unordered_map<Node, size_t> toIdx;
-    auto nodes = graph.getNodes();
-    for (size_t i = 0; i < nodes.size(); ++i) {
-        toIdx[nodes[i]] = i;
-    }
-    return toIdx;
-}
-
-// DOTファイル関連の関数
+namespace {
 
 void writeHeader(std::ostringstream& content) {
     content << "digraph G {\n"
@@ -39,32 +29,27 @@ void writeHeader(std::ostringstream& content) {
             << "\n";
 }
 
-void writeVertices(std::ostringstream& content, const std::unordered_map<Node, size_t>& toIdx) {
-    for (const auto& [node, idx] : toIdx) {
-        content << "\t" << idx << " [texlbl=\"$" << node.toTeX() << "$\"];\n";
+void writeVertices(std::ostringstream& content, const std::vector<Node>& nodes) {
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        content << "\t" << i << " [texlbl=\"$" << nodes[i].toTeX() << "$\"];\n";
     }
 }
 
-void writeEdges(std::ostringstream& content, const Graph& graph,
-                const std::unordered_map<Node, size_t>& toIdx) {
-    for (const auto& edge : graph.getEdges()) {
-        content << "\t" << toIdx.at(edge.getSource()) << " -> " << toIdx.at(edge.getTarget())
+void writeEdges(std::ostringstream& content, const std::vector<Edge>& edges) {
+    for (const auto& edge : edges) {
+        content << "\t" << edge.getSource().getLabel() << " -> " << edge.getTarget().getLabel()
                 << " [label=\"" << edge.getLabel() << "\", texlbl=\"$" << edge.getLabel()
                 << "$\"];\n";
     }
 }
 
+}  // namespace
+
 std::string cvtGraph2Dot(const Graph& graph) {
     std::ostringstream content;
     writeHeader(content);
-
-    // Generate node index mapping once
-    auto toIdx = genNodeIndexMap(graph);
-
-    // Pass the mapping to writeVertices and writeEdges
-    writeVertices(content, toIdx);
-    writeEdges(content, graph, toIdx);
-
+    writeVertices(content, graph.getNodes());
+    writeEdges(content, graph.getEdges(Graph::mode::ID));
     content << "}";
     return content.str();
 }
