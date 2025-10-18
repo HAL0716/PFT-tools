@@ -19,6 +19,8 @@
 #define PROJECT_SOURCE_DIR ""
 #endif
 
+namespace io::output {
+
 // ユーティリティ関数
 bool write(const std::string& path, const std::string& data) {
     path::genDirectory(path);
@@ -42,6 +44,8 @@ bool exec(const std::string& cmd) {
     }
     return true;
 }
+
+auto quote = [](const std::string& str) { return "\"" + str + "\""; };
 
 // CSV関連
 bool writeCsv(const std::string& path, const CsvData& data) {
@@ -93,51 +97,52 @@ bool writeSeqCsv(const std::string& filePath, const Graph& graph, unsigned int l
     return writeCsv(filePath, data);
 }
 
-// JSON関連
-bool writeJson(const std::string& path, const json& data) {
-    return write(path, data.dump(4));
-}
-
 // Graphviz関連
-bool writeDot(const std::string& path, const Graph& graph) {
+bool writeDot(const std::string& filePath, const Graph& graph) {
+    const auto& nodes = graph.getNodes();
+    const auto& edges = graph.getEdges(Graph::mode::ID);
+
     std::ostringstream oss;
-    oss << "digraph G {\n";
-    for (size_t i = 0; i < graph.getNodes().size(); ++i) {
-        oss << "  " << i << " [label=\"" << graph.getNodes()[i].getLabel() << "\"];\n";
+    oss << "digraph G {\n"
+        << "\tlayout=neato;\n"
+        << "\tsplines=true;\n"
+        << "\tnode [shape=ellipse, fixedsize=true];\n";
+    oss << "\n";
+    for (size_t i = 0; i < nodes.size(); ++i) {
+        oss << "\t" << i << " [texlbl=\"$" << nodes[i].toTeX() << "$\"];\n";
     }
-    for (const auto& edge : graph.getEdges(Graph::mode::ID)) {
-        oss << "  " << edge.getSource() << " -> " << edge.getTarget() << ";\n";
+    oss << "\n";
+    for (const auto& edge : edges) {
+        oss << "\t" << edge.getSource().getLabel() << " -> " << edge.getTarget().getLabel()
+            << " [label=\"" << edge.getLabel() << "\", texlbl=\"$" << edge.getLabel() << "$\"];\n";
     }
     oss << "}";
-    return write(path, oss.str());
+    return write(filePath, oss.str());
 }
 
-bool dotToTeX(const std::string& dir, const std::vector<Node>& nodes) {
-    auto quote = [](const std::string& str) { return "\"" + str + "\""; };
-    std::string dotPath = path::genFilePath(dir, nodes, "dot", "dot");
-    std::string texPath = path::genFilePath(dir, nodes, "tex", "tex");
+bool dotToTeX(const std::string& dotFilePath, const std::string& texFilePath) {
     const std::string pythonPath = std::string(PYTHON_VENV_PATH) + "/bin/python3";
     const std::string script =
         (std::filesystem::path(PROJECT_SOURCE_DIR) / "scripts" / "convert_dot_to_tex.py").string();
-    const std::string cmd =
-        quote(pythonPath) + " " + quote(script) + " " + quote(dotPath) + " " + quote(texPath);
+    const std::string cmd = quote(pythonPath) + " " + quote(script) + " " + quote(dotFilePath) +
+                            " " + quote(texFilePath);
     return exec(cmd);
 }
 
-bool texToPDF(const std::string& dir, const std::vector<Node>& nodes) {
-    auto quote = [](const std::string& str) { return "\"" + str + "\""; };
-    std::string texPath = path::genFilePath(dir, nodes, "tex", "tex");
-    std::string pdfPath = path::genFilePath(dir, nodes, "pdf", "pdf");
+bool texToPDF(const std::string& texFilePath, const std::string& pdfFilePath) {
     const std::string cmd = "pdflatex -interaction=nonstopmode -output-directory=" +
-                            quote(path::getDirectory(pdfPath)) + " " + quote(texPath) +
+                            quote(path::getDirectory(pdfFilePath)) + " " + quote(texFilePath) +
                             " > /dev/null 2>&1";
     return exec(cmd);
 }
 
-bool pdfToPNG(const std::string& dir, const std::vector<Node>& nodes) {
-    auto quote = [](const std::string& str) { return "\"" + str + "\""; };
-    std::string pdfPath = path::genFilePath(dir, nodes, "pdf", "pdf");
-    std::string pngPath = path::genFilePath(dir, nodes, "png", "png");
-    const std::string cmd = "convert -density 300 " + quote(pdfPath) + " " + quote(pngPath);
+bool pdfToPNG(const std::string& pdfFilePath, const std::string& pngFilePath) {
+    const std::string baseName = path::getFileName(pdfFilePath, false);
+    const std::string outputDir = path::getDirectory(pngFilePath);
+
+    const std::string cmd = "pdftoppm -png -singlefile " + quote(pdfFilePath) + " " +
+                            quote(outputDir + "/" + baseName) + " > /dev/null 2>&1";
     return exec(cmd);
 }
+
+}  // namespace io::output

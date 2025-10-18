@@ -7,24 +7,20 @@
 #include "core/Node.hpp"
 #include "nlohmann/json.hpp"
 
+namespace io::output {
+
 using CsvData = std::vector<std::vector<std::string>>;
 using json = nlohmann::json;
 
-// ユーティリティ関数
-bool write(const std::string& path, const std::string& data);
-bool exec(const std::string& cmd);
-
 // CSV関連
-bool writeCsv(const std::string& filePath, const CsvData& csvData);
 bool writeEdgesCsv(const std::string& filePath, const Graph& graph);
 bool writeMatrixCsv(const std::string& filePath, const Graph& graph);
 bool writeSeqCsv(const std::string& filePath, const Graph& graph, unsigned int length);
 
-// JSON関連
-bool writeJson(const std::string& filePath, const json& jsonData);
-
 // Graphviz関連
-bool writeDot(const std::string& path, const Graph& graph);
-bool dotToTeX(const std::string& dir, const std::vector<Node>& nodes);
-bool texToPDF(const std::string& dir, const std::vector<Node>& nodes);
-bool pdfToPNG(const std::string& dir, const std::vector<Node>& nodes);
+bool writeDot(const std::string& filePath, const Graph& graph);
+bool dotToTeX(const std::string& dotFilePath, const std::string& texFilePath);
+bool texToPDF(const std::string& texFilePath, const std::string& pdfFilePath);
+bool pdfToPNG(const std::string& pdfFilePath, const std::string& pngFilePath);
+
+}  // namespace io::output
