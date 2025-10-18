@@ -75,9 +75,17 @@ bool writeMatrixCsv(const std::string& filePath, const Graph& graph) {
         try {
             auto src = std::stoi(edge.getSource().getLabel());
             auto tgt = std::stoi(edge.getTarget().getLabel());
+
+            if (src < 0 || src >= n || tgt < 0 || tgt >= n) {
+                throw std::out_of_range("Node index out of range");
+            }
+
             matrix[src][tgt] += 1;
-        } catch (const std::exception& e) {
-            throw std::invalid_argument("Node labels must be valid integers for ID mode.");
+        } catch (const std::invalid_argument& e) {
+            throw std::invalid_argument("Node labels must be valid integers for ID mode: " +
+                                        std::string(e.what()));
+        } catch (const std::out_of_range& e) {
+            throw std::out_of_range("Node index out of range: " + std::string(e.what()));
         }
     }
     CsvData data(n, std::vector<std::string>(n));
