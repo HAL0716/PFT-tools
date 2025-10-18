@@ -67,7 +67,7 @@ void Config::formatForDeBruijn() {
 
     forbidden_word_length = getMaxLength(words);
 
-    while (forbidden_word_length != getMinLength(words)) {
+    while (*forbidden_word_length != getMinLength(words)) {
         extendWords(words, *forbidden_word_length, alphabet);
     }
 }
