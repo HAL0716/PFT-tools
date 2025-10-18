@@ -4,8 +4,8 @@
 #include <string>
 #include <vector>
 
-#include "json/Config.hpp"
-#include "core/Graph.hpp"
+#include "../formats/json/Config.hpp"
+#include "../../core/Graph.hpp"
 
 bool loadConfig(const std::string& filePath, Config& config);
 

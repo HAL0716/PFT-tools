@@ -3,6 +3,8 @@
 #include <string>
 #include <vector>
 
+#include "io/formats/csv/format.hpp"
+
 namespace csv {
 
 // CSVファイルを読み込む関数

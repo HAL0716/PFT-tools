@@ -1,12 +1,12 @@
-#include "input.hpp"
+#include "Input.hpp"
 
 #include <iostream>
 #include <unordered_set>
 
 #include "core/Edge.hpp"
 #include "core/Node.hpp"
-#include "csv/csv.hpp"
-#include "json/json.hpp"
+#include "../formats/csv/csv.hpp"
+#include "../formats/json/json.hpp"
 
 bool loadConfig(const std::string& filePath, Config& config) {
     nlohmann::json jsonConfig;
@@ -46,7 +46,7 @@ bool loadEdges(const std::string& filePath, Graph& graph) {
         std::string label = row[2];
         graph.addEdge(Edge(source, target, label));
     }
-    
+
     for (const auto& node : nodes) {
         graph.addNode(node);
     }

@@ -12,10 +12,11 @@
 #include "core/Graph.hpp"
 #include "core/Node.hpp"
 #include "core/constants.hpp"
-#include "data/input.hpp"
-#include "data/output.hpp"
-#include "graphviz/Graphviz.hpp"
-#include "json/Config.hpp"
+#include "io/formats/csv/csv.hpp"
+#include "io/formats/json/Config.hpp"
+#include "io/input/Input.hpp"
+#include "io/output/Output.hpp"
+#include "io/visualization/Graphviz.hpp"
 #include "path/PathUtils.hpp"
 #include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
@@ -199,7 +200,7 @@ void generateGraphFromJson(const std::string& configPath) {
                 } else if (format == "matrix") {
                     saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph);
                 } else if (format == "dot") {
-                    if (!graphviz::saveDot(baseDirectory, forbiddenCombinations, graph) ) {
+                    if (!graphviz::saveDot(baseDirectory, forbiddenCombinations, graph)) {
                         continue;
                     }
                 } else if (format == "png") {

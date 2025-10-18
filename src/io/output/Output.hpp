@@ -7,7 +7,7 @@
 
 #include "core/Graph.hpp"
 #include "core/Node.hpp"
-#include "json/Config.hpp"
+#include "../formats/json/Config.hpp"
 #include "nlohmann/json.hpp"
 
 using json = nlohmann::json;

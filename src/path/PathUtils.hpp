@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "core/Node.hpp"
-#include "json/Config.hpp"
+#include "io/formats/json/Config.hpp"
 
 namespace path {
 

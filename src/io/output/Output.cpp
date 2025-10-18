@@ -1,11 +1,11 @@
-#include "output.hpp"
+#include "Output.hpp"
 
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
-#include "csv/format.hpp"
+#include "../formats/csv/format.hpp"
 #include "path/PathUtils.hpp"
 
 void saveEdges(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
