@@ -1,11 +1,11 @@
 #pragma once
 
-#include <nlohmann/json.hpp>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
-#include "../formats/json/Config.hpp"
 #include "../../core/Graph.hpp"
+#include "../formats/json/Config.hpp"
 
 bool loadConfig(const std::string& filePath, Config& config);
 

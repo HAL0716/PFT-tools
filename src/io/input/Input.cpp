@@ -2,9 +2,8 @@
 
 #include <iostream>
 #include <unordered_set>
+#include <vector>
 
-#include "core/Edge.hpp"
-#include "core/Node.hpp"
 #include "../formats/csv/csv.hpp"
 #include "../formats/json/json.hpp"
 
@@ -27,7 +26,7 @@ bool loadConfig(const std::string& filePath, Config& config) {
 
 bool loadEdges(const std::string& filePath, Graph& graph) {
     std::vector<std::vector<std::string>> csvData;
-    if (!csv::read(filePath, csvData)) {
+    if (!io::formats::csv::read(filePath, csvData)) {
         return false;
     }
 
@@ -56,7 +55,7 @@ bool loadEdges(const std::string& filePath, Graph& graph) {
 
 bool loadAdjacencyMatrix(const std::string& filePath, Graph& graph) {
     std::vector<std::vector<std::string>> csvData;
-    if (!csv::read(filePath, csvData)) {
+    if (!io::formats::csv::read(filePath, csvData)) {
         return false;
     }
 
