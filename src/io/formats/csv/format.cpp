@@ -1,72 +1,47 @@
 #include "format.hpp"
 
-#include <filesystem>
-#include <iostream>
-#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
-namespace format {
+namespace io::formats::csv::format {
 
-std::string generateFilePath(const std::string& baseDirectory,
-                             const std::vector<Node>& forbiddenNodes,
-                             const std::string& subDirectory) {
-    std::string dirPath = baseDirectory + "/" + subDirectory + "/";
-    if (!std::filesystem::exists(dirPath)) {
-        std::filesystem::create_directories(dirPath);
-        std::cout << "Created directory: " << dirPath << std::endl;
+CsvData edges(const Graph& graph) {
+    // CSVデータ形式に変換
+    CsvData csvData;
+    for (const auto& edge : graph.getEdges(Graph::mode::ID)) {
+        csvData.push_back(
+            {edge.getSource().getLabel(), edge.getTarget().getLabel(), edge.getLabel()});
     }
 
-    std::ostringstream oss;
-    oss << dirPath;
-    for (size_t i = 0; i < forbiddenNodes.size(); ++i) {
-        if (i > 0)
-            oss << "-";
-        oss << forbiddenNodes[i];
-    }
-    oss << ".csv";
-
-    return oss.str();
+    return csvData;
 }
 
-std::string edges(const Graph& graph) {
-    auto nodes = graph.getNodes();
-    std::unordered_map<Node, size_t> toIdx;
-    for (size_t i = 0; i < nodes.size(); ++i) {
-        toIdx[nodes[i]] = i;
-    }
+CsvData adjacencyMatrix(const Graph& graph) {
+    // ノード数を取得
+    auto n = graph.getNodes().size();
 
-    std::ostringstream csvData;
-    for (const auto& edge : graph.getEdges()) {
-        size_t srcIdx = toIdx.at(edge.getSource());
-        size_t tgtIdx = toIdx.at(edge.getTarget());
-        csvData << srcIdx << "," << tgtIdx << "," << edge.getLabel() << "\n";
-    }
-    return csvData.str();
-}
-
-std::string adjacencyMatrix(const Graph& graph) {
-    auto nodes = graph.getNodes();
-    std::unordered_map<Node, size_t> toIdx;
-    for (size_t i = 0; i < nodes.size(); ++i) {
-        toIdx[nodes[i]] = i;
-    }
-
-    std::vector<std::vector<int>> adjMatrix(nodes.size(), std::vector<int>(nodes.size(), 0));
-    for (const auto& edge : graph.getEdges()) {
-        size_t srcIdx = toIdx.at(edge.getSource());
-        size_t tgtIdx = toIdx.at(edge.getTarget());
-        adjMatrix[srcIdx][tgtIdx] += 1;
-    }
-
-    std::ostringstream csvData;
-    for (const auto& row : adjMatrix) {
-        for (size_t j = 0; j < row.size(); ++j) {
-            if (j > 0)
-                csvData << ",";
-            csvData << row[j];
+    // 隣接行列を初期化
+    std::vector<std::vector<int>> adjMatrix(n, std::vector<int>(n, 0));
+    for (const auto& edge : graph.getEdges(Graph::mode::ID)) {
+        try {
+            auto srcIdx = std::stoi(edge.getSource().getLabel());
+            auto tgtIdx = std::stoi(edge.getTarget().getLabel());
+            adjMatrix[srcIdx][tgtIdx] += 1;
+        } catch (const std::exception& e) {
+            throw std::invalid_argument("Node labels must be valid integers for ID mode.");
         }
-        csvData << "\n";
     }
-    return csvData.str();
+
+    // CSVデータ形式に変換
+    CsvData csvData(n, std::vector<std::string>(n, ""));
+    for (size_t i = 0; i < n; ++i) {
+        for (size_t j = 0; j < n; ++j) {
+            csvData[i][j] = std::to_string(adjMatrix[i][j]);
+        }
+    }
+
+    return csvData;
 }
 
-}  // namespace format
+}  // namespace io::formats::csv::format
