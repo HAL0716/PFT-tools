@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace path {
+namespace path::generator {
 
 std::string genDirPath(const Config& config) {
     auto getRootPath = []() -> std::filesystem::path {
@@ -70,4 +70,4 @@ void genDirectory(const std::string& filePath) {
     }
 }
 
-}  // namespace path
+}  // namespace path::generator

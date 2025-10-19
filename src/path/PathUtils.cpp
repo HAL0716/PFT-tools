@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace path {
+namespace path::utils {
 
 std::vector<std::string> getCsvFiles(const std::string& directoryPath) {
     std::vector<std::string> csvFiles;
@@ -58,4 +58,4 @@ std::string getFileName(const std::string& filePath, bool withExt) {
     return withExt ? path.filename().string() : path.stem().string();
 }
 
-}  // namespace path
+}  // namespace path::utils

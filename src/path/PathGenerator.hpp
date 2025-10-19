@@ -6,7 +6,7 @@
 #include "core/Node.hpp"
 #include "io/Config.hpp"
 
-namespace path {
+namespace path::generator {
 
 using Config = io::type::Config;
 
@@ -20,4 +20,4 @@ std::string genFilePath(const std::string& baseDirectory, const std::vector<Node
 // 指定されたディレクトリが存在しない場合は作成する関数
 void genDirectory(const std::string& filePath);
 
-}  // namespace path
+}  // namespace path::generator
