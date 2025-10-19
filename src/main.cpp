@@ -12,11 +12,12 @@
 #include "core/Graph.hpp"
 #include "core/Node.hpp"
 #include "core/constants.hpp"
+#include "io/Config.hpp"
 #include "io/Input.hpp"
 #include "io/Output.hpp"
 #include "io/utils.hpp"
-#include "io/Config.hpp"
-#include "path/PathUtils.hpp"
+#include "path/Generator.hpp"
+#include "path/utils.hpp"
 #include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
 
@@ -55,8 +56,6 @@ void generateGraphFromJson(const std::string& configPath) {
 
     auto forbiddenNodes = io::input::genNodesFromConfig(config);
 
-    std::string baseDirectory = path::genDirPath(config);
-
     std::unique_ptr<GraphGenerator> generator = createGraphGenerator(config);
 
     try {
@@ -71,25 +70,22 @@ void generateGraphFromJson(const std::string& configPath) {
             }
 
             for (const auto& format : config.output.formats) {
+                path::Generator pathGenerator(config, forbiddenCombinations);
+
                 if (format == "edges") {
-                    const std::string filePath =
-                        path::genFilePath(baseDirectory, forbiddenCombinations, "edges");
+                    const std::string filePath = pathGenerator.genFilePath("edges", "csv");
                     io::output::writeEdgesCsv(filePath, graph);
                 } else if (format == "matrix") {
-                    const std::string filePath =
-                        path::genFilePath(baseDirectory, forbiddenCombinations, "matrix");
+                    const std::string filePath = pathGenerator.genFilePath("matrix", "csv");
                     io::output::writeMatrixCsv(filePath, graph);
                 } else if (format == "dot") {
-                    const std::string filePath =
-                        path::genFilePath(baseDirectory, forbiddenCombinations, "dot", "dot");
+                    const std::string filePath = pathGenerator.genFilePath("dot", "dot");
                     io::output::writeDot(filePath, graph);
                 } else if (format == "pdf") {
-                    const std::string filePath =
-                        path::genFilePath(baseDirectory, forbiddenCombinations, "pdf", "pdf");
+                    const std::string filePath = pathGenerator.genFilePath("pdf", "pdf");
                     io::output::writePdf(filePath, graph);
                 } else if (format == "png") {
-                    const std::string filePath =
-                        path::genFilePath(baseDirectory, forbiddenCombinations, "png", "png");
+                    const std::string filePath = pathGenerator.genFilePath("png", "png");
                     io::output::writePng(filePath, graph);
                 } else {
                     io::utils::printErrorAndExit("Unknown output format: " + format);
@@ -143,7 +139,7 @@ int main(int argc, char* argv[]) {
         if (extension == ".csv") {
             csvFiles.push_back(configPath);
         } else if (extension.empty()) {
-            csvFiles = path::getCsvFiles(configPath);
+            csvFiles = path::utils::getFiles(configPath, ".csv");
             if (csvFiles.empty()) {
                 io::utils::printErrorAndExit("No CSV files found in the specified directory.");
             }
@@ -164,8 +160,8 @@ int main(int argc, char* argv[]) {
             }
 
             if (sequencesLength > 0 && format == "edges") {
-                std::string directory = path::getDirectory(csvFile, 2);
-                std::string fileName = path::getFileName(csvFile);
+                std::string directory = path::utils::extractPath(csvFile, 2, true, false, false);
+                std::string fileName = path::utils::extractPath(csvFile, 0, false, true, true);
                 std::string filePath = directory + "/sequences/" + fileName;
                 io::output::writeSeqCsv(filePath, graph, sequencesLength);
             }

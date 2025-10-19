@@ -9,7 +9,7 @@
 #include <stdexcept>
 
 #include "io/utils.hpp"
-#include "path/PathUtils.hpp"
+#include "path/utils.hpp"
 
 #ifndef PYTHON_VENV_PATH
 #define PYTHON_VENV_PATH ""
@@ -23,7 +23,7 @@ namespace io::output {
 
 // ユーティリティ関数
 bool write(const std::string& path, const std::string& data) {
-    path::genDirectory(path);
+    path::utils::genDir(path);
     std::ofstream file(path);
     if (!io::utils::checkFileOpen(file, path)) {
         return false;
@@ -136,7 +136,7 @@ bool dotToTeX(const std::string& dotFilePath) {
     const std::string scriptPath =
         (std::filesystem::path(PROJECT_SOURCE_DIR) / "scripts" / "convert_dot_to_tex.py").string();
     const std::string texFilePath =
-        path::getDirectory(dotFilePath) + "/" + path::getFileName(dotFilePath, false) + ".tex";
+        path::utils::extractPath(dotFilePath, 0, true, true, false) + ".tex";
 
     const std::string cmd = quote(pythonPath) + " " + quote(scriptPath) + " " + quote(dotFilePath) +
                             " " + quote(texFilePath);
@@ -144,7 +144,7 @@ bool dotToTeX(const std::string& dotFilePath) {
 }
 
 bool texToPDF(const std::string& texFilePath) {
-    const std::string directory = path::getDirectory(texFilePath);
+    const std::string directory = path::utils::extractPath(texFilePath, 0, true, false, false);
 
     const std::string cmd =
         "pdflatex -interaction=nonstopmode -output-directory=" + quote(directory) + " " +
@@ -153,29 +153,29 @@ bool texToPDF(const std::string& texFilePath) {
 }
 
 bool pdfToPNG(const std::string& pdfFilePath) {
-    const std::string directory = path::getDirectory(pdfFilePath);
-    const std::string baseName = path::getFileName(pdfFilePath, false);
+    const std::string pngFilePath = path::utils::extractPath(pdfFilePath, 0, true, true, false);
 
     const std::string cmd = "pdftoppm -png -singlefile " + quote(pdfFilePath) + " " +
-                            quote(directory + "/" + baseName) + " > /dev/null 2>&1";
+                            quote(pngFilePath) + " > /dev/null 2>&1";
     return exec(cmd);
 }
 
 bool writePdf(const std::string& filePath, const Graph& graph) {
-    const std::string tempDir = path::getDirectory(filePath) + "/temp";
-    path::genDirectory(tempDir);
+    const std::string tempDir = path::utils::extractPath(filePath, 0, true, false, false) + "/temp";
+    path::utils::genDir(tempDir);
+    const std::string basename = path::utils::extractPath(filePath, 0, false, true, false);
 
-    const std::string dotFilePath = tempDir + "/" + path::getFileName(filePath, false) + ".dot";
+    const std::string dotFilePath = tempDir + "/" + basename + ".dot";
     if (!writeDot(dotFilePath, graph)) {
         return false;
     }
 
-    const std::string texFilePath = tempDir + "/" + path::getFileName(filePath, false) + ".tex";
+    const std::string texFilePath = tempDir + "/" + basename + ".tex";
     if (!dotToTeX(dotFilePath)) {
         return false;
     }
 
-    const std::string tempPdfPath = tempDir + "/" + path::getFileName(filePath, false) + ".pdf";
+    const std::string tempPdfPath = tempDir + "/" + basename + ".pdf";
     if (!texToPDF(texFilePath)) {
         return false;
     }
@@ -193,15 +193,16 @@ bool writePdf(const std::string& filePath, const Graph& graph) {
 }
 
 bool writePng(const std::string& filePath, const Graph& graph) {
-    const std::string tempDir = path::getDirectory(filePath) + "/temp";
-    path::genDirectory(tempDir);
+    const std::string tempDir = path::utils::extractPath(filePath, 0, true, false, false) + "/temp";
+    path::utils::genDir(tempDir);
+    const std::string basename = path::utils::extractPath(filePath, 0, false, true, false);
 
-    const std::string tempPdfPath = tempDir + "/" + path::getFileName(filePath, false) + ".pdf";
+    const std::string tempPdfPath = tempDir + "/" + basename + ".pdf";
     if (!writePdf(tempPdfPath, graph)) {
         return false;
     }
 
-    const std::string tempPngPath = tempDir + "/" + path::getFileName(filePath, false) + ".png";
+    const std::string tempPngPath = tempDir + "/" + basename + ".png";
     if (!pdfToPNG(tempPdfPath)) {
         return false;
     }
