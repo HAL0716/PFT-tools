@@ -18,10 +18,8 @@ std::vector<std::string> getFiles(const std::string& dirPath, const std::string&
                 files.push_back(entry.path().string());
             }
         }
-    } catch (const std::filesystem::filesystem_error& e) {
-        std::cerr << "Filesystem error: " << e.what() << std::endl;
     } catch (const std::exception& e) {
-        std::cerr << "Error: Failed to read directory: " << e.what() << std::endl;
+        std::cerr << "Error accessing directory: " << e.what() << std::endl;
     }
 
     return files;
@@ -34,9 +32,14 @@ void genDirectory(const std::string& filePath) {
         path = path.parent_path();
     }
 
-    if (!path.empty() && !std::filesystem::exists(path)) {
-        std::filesystem::create_directories(path);
-        std::cout << "Created directory: " << path.string() << std::endl;
+    try {
+        if (!std::filesystem::exists(path)) {
+            std::filesystem::create_directories(path);
+        }
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "Filesystem error creating directory: " << e.what() << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "General error creating directory: " << e.what() << std::endl;
     }
 }
 
@@ -45,7 +48,7 @@ std::filesystem::path ascendDirectories(std::filesystem::path path, int depth) {
         throw std::invalid_argument("Depth must be non-negative");
     }
 
-    for (int i = 0; i < depth; ++i) {
+    while (depth-- > 0) {
         if (!path.has_parent_path() || path == path.root_path()) {
             throw std::out_of_range("Depth exceeds the root directory");
         }
@@ -62,22 +65,15 @@ std::string extractPath(const std::string& filePath, int depth, bool includeDir,
 
     std::filesystem::path path(filePath), result;
 
-    // ディレクトリ部分を取得
     if (includeDir) {
         result = ascendDirectories(path.parent_path(), depth);
     }
 
-    // ファイル名部分を取得
     if (includeFile) {
         result /= includeExt ? path.filename() : path.stem();
     }
 
-    // 両方含めない場合は空文字列を返す
-    if (!includeDir && !includeFile) {
-        return "";
-    }
-
-    return result.string();
+    return includeDir || includeFile ? result.string() : "";
 }
 
 }  // namespace path::utils
