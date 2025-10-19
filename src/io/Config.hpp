@@ -1,8 +1,10 @@
 #pragma once
 
 #include <algorithm>
+#include <functional>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "core/constants.hpp"
@@ -20,6 +22,8 @@ struct OutputConfig {
 struct Word {
     std::string label;
     unsigned int phase;
+
+    Word(const std::string& label, unsigned int phase) : label(label), phase(phase) {}
 
     size_t hashCode() const {
         return std::hash<std::string>()(label) ^ std::hash<unsigned int>()(phase);
@@ -52,3 +56,10 @@ void from_json(const json& j, OutputConfig& o);
 void from_json(const json& j, Config& c);
 
 }  // namespace io::type
+
+namespace std {
+template <>
+struct hash<io::type::Word> {
+    size_t operator()(const io::type::Word& word) const { return word.hashCode(); }
+};
+}  // namespace std
