@@ -6,18 +6,18 @@
 #include "core/Node.hpp"
 #include "io/Config.hpp"
 
-namespace path::generator {
+namespace path {
 
 using Config = io::type::Config;
 
-// ディレクトリパスを生成する関数
-std::string genDirPath(const Config& config);
+class Generator {
+   public:
+    Generator(const Config& config, const std::vector<Node>& nodes);
+    std::string genFilePath(const std::string& subDir = "", const std::string& ext = "csv");
 
-// ファイルパスを生成する関数
-std::string genFilePath(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
-                        const std::string& subDirectory, const std::string& extension = "csv");
+   private:
+    std::string baseDir;
+    std::string baseName;
+};
 
-// 指定されたディレクトリが存在しない場合は作成する関数
-void genDirectory(const std::string& filePath);
-
-}  // namespace path::generator
+}  // namespace path

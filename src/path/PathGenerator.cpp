@@ -4,70 +4,60 @@
 #include <iostream>
 #include <sstream>
 
-namespace path::generator {
+namespace path {
 
-std::string genDirPath(const Config& config) {
-    auto getRootPath = []() -> std::filesystem::path {
-        return std::filesystem::current_path().parent_path();
-    };
+std::string getRoot() {
+    return std::filesystem::current_path().parent_path().string();
+}
 
-    std::filesystem::path projectRoot = getRootPath();
+std::string buildBaseDir(const Config& cfg, const std::string& root) {
+    std::ostringstream path;
+    path << root << "/" << cfg.output.directory << "/";
 
-    std::ostringstream basePath;
-    basePath << projectRoot.string() << "/" << config.output.directory << "/";
+    if (cfg.mode == "all-patterns") {
+        path << cfg.alphabet_size << "-" << cfg.period << "-"
+             << cfg.forbidden_word_length.value_or(0);
 
-    if (config.mode == "all-patterns") {
-        basePath << config.alphabet_size << "-" << config.period << "-"
-                 << config.forbidden_word_length.value_or(0);
-
-        if (config.forbidden_per_position) {
-            basePath << ":";
-            const auto& forbiddenCounts = config.forbidden_per_position.value();
-            for (size_t i = 0; i < forbiddenCounts.size(); ++i) {
+        if (cfg.forbidden_per_position) {
+            path << ":";
+            const auto& counts = cfg.forbidden_per_position.value();
+            for (size_t i = 0; i < counts.size(); ++i) {
                 if (i > 0)
-                    basePath << "-";
-                basePath << forbiddenCounts[i];
+                    path << "-";
+                path << counts[i];
             }
         }
     } else {
-        basePath << config.mode;
+        path << cfg.mode;
     }
 
-    return basePath.str();
+    return path.str();
 }
 
-std::string genFilePath(const std::string& baseDirectory, const std::vector<Node>& forbiddenNodes,
-                        const std::string& subDirectory, const std::string& extension) {
-    std::string dirPath = baseDirectory + "/" + subDirectory + "/";
-    if (!std::filesystem::exists(dirPath)) {
-        std::filesystem::create_directories(dirPath);
-        std::cout << "Created directory: " << dirPath << std::endl;
-    }
-
-    std::ostringstream oss;
-    oss << dirPath;
-    for (size_t i = 0; i < forbiddenNodes.size(); ++i) {
+std::string buildBaseName(const std::vector<Node>& nodes) {
+    std::ostringstream name;
+    for (size_t i = 0; i < nodes.size(); ++i) {
         if (i > 0)
-            oss << "-";
-        const auto& node = forbiddenNodes[i];
-        oss << node.getLabel() << ":" << node.getPhase();
+            name << "-";
+        const auto& node = nodes[i];
+        name << node.getLabel() << ":" << node.getPhase();
     }
-    oss << "." << extension;
+    return name.str();
+}
 
+Generator::Generator(const Config& config, const std::vector<Node>& nodes)
+    : baseDir(buildBaseDir(config, getRoot())), baseName(buildBaseName(nodes)) {}
+
+std::string Generator::genFilePath(const std::string& subDir, const std::string& ext) {
+    std::ostringstream oss;
+    oss << baseDir;
+
+    if (!subDir.empty()) {
+        oss << "/" << subDir;
+    }
+
+    oss << "/" << baseName << "." << ext;
     return oss.str();
 }
 
-void genDirectory(const std::string& filePath) {
-    std::filesystem::path path(filePath);
-
-    if (path.has_extension()) {
-        path = path.parent_path();
-    }
-
-    if (!path.empty() && !std::filesystem::exists(path)) {
-        std::filesystem::create_directories(path);
-        std::cout << "Created directory: " << path.string() << std::endl;
-    }
-}
-
-}  // namespace path::generator
+}  // namespace path
