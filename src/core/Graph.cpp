@@ -19,8 +19,26 @@ const std::vector<Node>& Graph::getNodes() const {
 }
 
 // エッジリストを取得
-const std::vector<Edge>& Graph::getEdges() const {
-    return edges;
+const std::vector<Edge>& Graph::getEdges(const mode& mode) const {
+    if (mode == mode::ID) {
+        // ノードからインデックスへのマッピングを作成
+        std::unordered_map<Node, size_t> toIdx;
+        for (size_t i = 0; i < nodes.size(); ++i) {
+            toIdx[nodes[i]] = i;
+        }
+
+        // IDモードのエッジリストを生成
+        idEdges.clear();
+        idEdges.reserve(edges.size());
+        for (const auto& edge : edges) {
+            Node src(std::to_string(toIdx.at(edge.getSource())));
+            Node tgt(std::to_string(toIdx.at(edge.getTarget())));
+            idEdges.emplace_back(src, tgt, edge.getLabel());
+        }
+        return idEdges;
+    } else {
+        return edges;
+    }
 }
 
 // 隣接リストを生成
@@ -65,7 +83,8 @@ int Graph::countPathsOfLength(int length) const {
 }
 
 // 辺のラベルを繋げてできる指定された長さの系列の集合を取得
-// 注意: このアルゴリズムは指数時間計算量を持ち、大きなグラフや長い系列長に対してはメモリや計算時間が膨大になる可能性があります。
+// 注意:
+// このアルゴリズムは指数時間計算量を持ち、大きなグラフや長い系列長に対してはメモリや計算時間が膨大になる可能性があります。
 // 必要に応じてlengthやグラフサイズに制限を設けてください。
 std::unordered_set<std::string> Graph::getEdgeLabelSequences(int length) const {
     if (length <= 0)

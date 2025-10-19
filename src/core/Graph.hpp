@@ -9,6 +9,8 @@
 
 class Graph {
    public:
+    enum class mode { Normal, ID };
+
     // ノードを追加
     void addNode(const Node& node);
 
@@ -19,7 +21,7 @@ class Graph {
     const std::vector<Node>& getNodes() const;
 
     // エッジリストを取得
-    const std::vector<Edge>& getEdges() const;
+    const std::vector<Edge>& getEdges(const mode& mode = mode::Normal) const;
 
     // 隣接リストを生成
     std::unordered_map<Node, std::unordered_map<std::string, Node>> genAdjacencyList() const;
@@ -31,6 +33,7 @@ class Graph {
     std::unordered_set<std::string> getEdgeLabelSequences(int length) const;
 
    private:
-    std::vector<Node> nodes;  // ノードリスト
-    std::vector<Edge> edges;  // エッジリスト
+    std::vector<Node> nodes;            // ノードリスト
+    std::vector<Edge> edges;            // エッジリスト
+    mutable std::vector<Edge> idEdges;  // IDモード用のエッジキャッシュ
 };

@@ -12,21 +12,16 @@
 #include "core/Graph.hpp"
 #include "core/Node.hpp"
 #include "core/constants.hpp"
-#include "data/input.hpp"
-#include "data/output.hpp"
-#include "graphviz/Graphviz.hpp"
-#include "json/Config.hpp"
+#include "io/Input.hpp"
+#include "io/Output.hpp"
+#include "io/utils.hpp"
+#include "io/Config.hpp"
 #include "path/PathUtils.hpp"
 #include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
 
+using Config = io::type::Config;
 using json = nlohmann::json;
-
-// エラーメッセージを一元管理
-void printErrorAndExit(const std::string& message) {
-    std::cerr << "Error: " << message << std::endl;
-    exit(1);
-}
 
 // GraphGeneratorを生成する関数マップ
 static const std::map<std::string, std::function<std::unique_ptr<GraphGenerator>(const Config&)>>
@@ -51,132 +46,14 @@ std::unique_ptr<GraphGenerator> createGraphGenerator(const Config& config) {
     }
 }
 
-// forbiddenNodesListを生成する関数
-std::vector<std::vector<std::vector<Node>>> generateForbiddenNodesList(
-    const std::vector<std::string>& words, const std::vector<unsigned int>& forbiddenPerPosition,
-    unsigned int period) {
-    std::vector<std::vector<std::vector<Node>>> forbiddenNodesList;
-
-    for (int i = 0; i < period; ++i) {
-        unsigned int n = forbiddenPerPosition[i];
-        if (n > words.size()) {
-            printErrorAndExit("forbidden_per_position value exceeds total combinations.");
-        }
-
-        std::vector<Node> forbiddenNodes;
-        for (const auto& w : words) {
-            forbiddenNodes.emplace_back(w, i);
-        }
-
-        forbiddenNodesList.push_back(combine(forbiddenNodes, n, false));
-    }
-
-    return forbiddenNodesList;
-}
-
-// DFSを用いて禁止ノードを組み合わせる関数
-std::vector<std::vector<Node>> combineForbiddenNodes(
-    const std::vector<std::vector<std::vector<Node>>>& forbiddenNodesList) {
-    std::vector<std::vector<Node>> combinedNodes;
-    std::function<void(int, std::vector<Node>)> dfs = [&](int depth, std::vector<Node> current) {
-        if (depth == forbiddenNodesList.size()) {
-            combinedNodes.push_back(current);
-            return;
-        }
-        for (const auto& nodes : forbiddenNodesList[depth]) {
-            auto next = current;
-            next.insert(next.end(), nodes.begin(), nodes.end());
-            dfs(depth + 1, next);
-        }
-    };
-    dfs(0, {});
-    return combinedNodes;
-}
-
-// 単語を指定長さまで拡張する
-void extendWords(std::vector<std::pair<std::string, unsigned int>>& words, unsigned int targetLen,
-                 const std::string& alphabet) {
-    std::vector<std::pair<std::string, unsigned int>> extended;
-
-    for (const auto& word : words) {
-        if (word.first.size() == targetLen) {
-            extended.push_back(word);
-        } else {
-            for (char c : alphabet) {
-                extended.emplace_back(word.first + c, word.second);
-            }
-        }
-    }
-
-    words = std::move(extended);
-}
-
-// 禁止語リスト内の単語長を揃える
-void formatForDeBruijn(Config& config) {
-    auto& words = *config.forbidden_words;
-    std::string alphabet = ALPHABET.substr(0, config.alphabet_size);
-
-    // 最大長を取得
-    auto getMaxLength = [](const auto& ws) {
-        return std::max_element(
-                   ws.begin(), ws.end(),
-                   [](const auto& a, const auto& b) { return a.first.size() < b.first.size(); })
-            ->first.size();
-    };
-
-    // 最短長を取得
-    auto getMinLength = [](const auto& ws) {
-        return std::min_element(
-                   ws.begin(), ws.end(),
-                   [](const auto& a, const auto& b) { return a.first.size() < b.first.size(); })
-            ->first.size();
-    };
-
-    config.forbidden_word_length = getMaxLength(words);
-
-    // 長さを揃える
-    while (config.forbidden_word_length != getMinLength(words)) {
-        extendWords(words, *config.forbidden_word_length, alphabet);
-    }
-}
-
-// 禁止ノードの生成ロジックを分離
-std::vector<std::vector<Node>> generateForbiddenNodes(const Config& config) {
-    if (config.mode == "custom") {
-        if (config.algorithm == "DeBruijn") {
-            formatForDeBruijn(const_cast<Config&>(config));
-        }
-
-        // Customモードの禁止ノード生成
-        std::vector<Node> forbiddenNodes;
-        for (const auto& forbidden : config.forbidden_words.value()) {
-            forbiddenNodes.emplace_back(forbidden.first, forbidden.second);
-        }
-        if (forbiddenNodes.empty()) {
-            printErrorAndExit("forbidden_words is empty.");
-        }
-        return {forbiddenNodes};
-    } else if (config.mode == "all-patterns") {
-        auto words = combine(ALPHABET.substr(0, config.alphabet_size),
-                             config.forbidden_word_length.value(), true);
-        auto forbiddenNodesList =
-            generateForbiddenNodesList(words, config.forbidden_per_position.value(), config.period);
-
-        return combineForbiddenNodes(forbiddenNodesList);
-    } else {
-        printErrorAndExit("Unknown mode '" + config.mode + "'.");
-    }
-    return {};
-}
-
 // JSON設定からグラフを生成する関数
 void generateGraphFromJson(const std::string& configPath) {
-    Config config;
-    if (!loadConfig(configPath, config)) {
-        printErrorAndExit("Failed to load config.");
+    io::type::Config config;
+    if (!io::input::readConfigJson(configPath, config)) {
+        io::utils::printErrorAndExit("Failed to load config.");
     }
 
-    auto forbiddenNodes = generateForbiddenNodes(config);
+    auto forbiddenNodes = io::input::genNodesFromConfig(config);
 
     std::string baseDirectory = path::genDirPath(config);
 
@@ -195,33 +72,32 @@ void generateGraphFromJson(const std::string& configPath) {
 
             for (const auto& format : config.output.formats) {
                 if (format == "edges") {
-                    saveEdges(baseDirectory, forbiddenCombinations, graph);
+                    const std::string filePath =
+                        path::genFilePath(baseDirectory, forbiddenCombinations, "edges");
+                    io::output::writeEdgesCsv(filePath, graph);
                 } else if (format == "matrix") {
-                    saveAdjacencyMatrix(baseDirectory, forbiddenCombinations, graph);
+                    const std::string filePath =
+                        path::genFilePath(baseDirectory, forbiddenCombinations, "matrix");
+                    io::output::writeMatrixCsv(filePath, graph);
                 } else if (format == "dot") {
-                    if (!graphviz::saveDot(baseDirectory, forbiddenCombinations, graph) ) {
-                        continue;
-                    }
+                    const std::string filePath =
+                        path::genFilePath(baseDirectory, forbiddenCombinations, "dot", "dot");
+                    io::output::writeDot(filePath, graph);
+                } else if (format == "pdf") {
+                    const std::string filePath =
+                        path::genFilePath(baseDirectory, forbiddenCombinations, "pdf", "pdf");
+                    io::output::writePdf(filePath, graph);
                 } else if (format == "png") {
-                    if (!graphviz::saveDot(baseDirectory, forbiddenCombinations, graph)) {
-                        continue;
-                    }
-                    if (!graphviz::cvtDot2TeX(baseDirectory, forbiddenCombinations)) {
-                        continue;
-                    }
-                    if (!graphviz::cvtTex2PDF(baseDirectory, forbiddenCombinations)) {
-                        continue;
-                    }
-                    if (!graphviz::cvtPDF2PNG(baseDirectory, forbiddenCombinations)) {
-                        continue;
-                    }
+                    const std::string filePath =
+                        path::genFilePath(baseDirectory, forbiddenCombinations, "png", "png");
+                    io::output::writePng(filePath, graph);
                 } else {
-                    printErrorAndExit("Unknown output format: " + format);
+                    io::utils::printErrorAndExit("Unknown output format: " + format);
                 }
             }
         }
     } catch (const std::exception& e) {
-        printErrorAndExit(e.what());
+        io::utils::printErrorAndExit(e.what());
     }
 }
 
@@ -259,7 +135,8 @@ int main(int argc, char* argv[]) {
         }
 
         if (format != "edges" && format != "matrix") {
-            printErrorAndExit("Invalid format specified. Use 'edges', 'matrix', or 'directory'.");
+            io::utils::printErrorAndExit(
+                "Invalid format specified. Use 'edges', 'matrix', or 'directory'.");
         }
 
         std::vector<std::string> csvFiles;
@@ -268,31 +145,29 @@ int main(int argc, char* argv[]) {
         } else if (extension.empty()) {
             csvFiles = path::getCsvFiles(configPath);
             if (csvFiles.empty()) {
-                printErrorAndExit("No CSV files found in the specified directory.");
+                io::utils::printErrorAndExit("No CSV files found in the specified directory.");
             }
         } else {
-            printErrorAndExit("Unsupported file extension: " + extension);
+            io::utils::printErrorAndExit("Unsupported file extension: " + extension);
         }
 
         for (const auto& csvFile : csvFiles) {
             Graph graph;
             if (format == "edges") {
-                if (!loadEdges(csvFile, graph)) {
+                if (!io::input::readEdgesCSV(csvFile, graph)) {
                     continue;
                 }
             } else if (format == "matrix") {
-                if (!loadAdjacencyMatrix(csvFile, graph)) {
+                if (!io::input::readMatrixCSV(csvFile, graph)) {
                     continue;
                 }
             }
 
             if (sequencesLength > 0 && format == "edges") {
-                const auto& sequences = graph.getEdgeLabelSequences(sequencesLength);
-
                 std::string directory = path::getDirectory(csvFile, 2);
                 std::string fileName = path::getFileName(csvFile);
                 std::string filePath = directory + "/sequences/" + fileName;
-                saveSequences(filePath, sequences);
+                io::output::writeSeqCsv(filePath, graph, sequencesLength);
             }
 
             if (maxEigenvalue) {
@@ -300,7 +175,7 @@ int main(int argc, char* argv[]) {
             }
         }
     } catch (const std::exception& e) {
-        printErrorAndExit(e.what());
+        io::utils::printErrorAndExit(e.what());
     }
 
     return 0;
