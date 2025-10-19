@@ -13,6 +13,6 @@ std::string extractPath(const std::string& filePath, int depth = 0, bool include
                         bool includeFile = true, bool includeExt = true);
 
 // 指定されたディレクトリが存在しない場合は作成する関数
-void genDirectory(const std::string& filePath);
+void genDir(const std::string& filePath);
 
 }  // namespace path::utils

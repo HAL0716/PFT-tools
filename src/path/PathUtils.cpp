@@ -25,7 +25,7 @@ std::vector<std::string> getFiles(const std::string& dirPath, const std::string&
     return files;
 }
 
-void genDirectory(const std::string& filePath) {
+void genDir(const std::string& filePath) {
     std::filesystem::path path(filePath);
 
     if (path.has_extension()) {
@@ -43,7 +43,7 @@ void genDirectory(const std::string& filePath) {
     }
 }
 
-std::filesystem::path ascendDirectories(std::filesystem::path path, int depth) {
+std::filesystem::path ascendDir(std::filesystem::path path, int depth) {
     if (depth < 0) {
         throw std::invalid_argument("Depth must be non-negative");
     }
@@ -66,7 +66,7 @@ std::string extractPath(const std::string& filePath, int depth, bool includeDir,
     std::filesystem::path path(filePath), result;
 
     if (includeDir) {
-        result = ascendDirectories(path.parent_path(), depth);
+        result = ascendDir(path.parent_path(), depth);
     }
 
     if (includeFile) {

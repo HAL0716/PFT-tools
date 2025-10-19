@@ -154,8 +154,7 @@ bool texToPDF(const std::string& texFilePath) {
 }
 
 bool pdfToPNG(const std::string& pdfFilePath) {
-    const std::string pngFilePath =
-        path::utils::extractPath(pdfFilePath, 0, true, true, false);
+    const std::string pngFilePath = path::utils::extractPath(pdfFilePath, 0, true, true, false);
 
     const std::string cmd = "pdftoppm -png -singlefile " + quote(pdfFilePath) + " " +
                             quote(pngFilePath) + " > /dev/null 2>&1";
@@ -164,7 +163,7 @@ bool pdfToPNG(const std::string& pdfFilePath) {
 
 bool writePdf(const std::string& filePath, const Graph& graph) {
     const std::string tempDir = path::utils::extractPath(filePath, 0, true, false, false) + "/temp";
-    path::utils::genDirectory(tempDir);
+    path::utils::genDir(tempDir);
     const std::string basename = path::utils::extractPath(filePath, 0, false, true, false);
 
     const std::string dotFilePath = tempDir + "/" + basename + ".dot";
@@ -196,7 +195,7 @@ bool writePdf(const std::string& filePath, const Graph& graph) {
 
 bool writePng(const std::string& filePath, const Graph& graph) {
     const std::string tempDir = path::utils::extractPath(filePath, 0, true, false, false) + "/temp";
-    path::utils::genDirectory(tempDir);
+    path::utils::genDir(tempDir);
     const std::string basename = path::utils::extractPath(filePath, 0, false, true, false);
 
     const std::string tempPdfPath = tempDir + "/" + basename + ".pdf";
