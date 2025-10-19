@@ -29,7 +29,11 @@ void Config::validate() const {
 void Config::extendWords(std::vector<Word>& words, unsigned int targetLen,
                          const std::string& alphabet) const {
     std::vector<Word> extended;
-    extended.reserve(words.size() * alphabet.size());
+    size_t reserve_size = 0;
+    for (const auto& word : words) {
+        reserve_size += (word.label.size() == targetLen) ? 1 : alphabet.size();
+    }
+    extended.reserve(reserve_size);
 
     for (auto& word : words) {
         if (word.label.size() == targetLen) {
