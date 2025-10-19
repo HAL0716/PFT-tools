@@ -29,10 +29,11 @@ void Config::validate() const {
 void Config::extendWords(std::vector<Word>& words, unsigned int targetLen,
                          const std::string& alphabet) const {
     std::vector<Word> extended;
+    extended.reserve(words.size() * alphabet.size());
 
-    for (const auto& word : words) {
+    for (auto& word : words) {
         if (word.label.size() == targetLen) {
-            extended.push_back(word);
+            extended.push_back(std::move(word));
         } else {
             for (char c : alphabet) {
                 extended.emplace_back(Word{word.label + c, word.phase});
@@ -77,8 +78,6 @@ void from_json(const json& j, OutputConfig& o) {
     j.at("directory").get_to(o.directory);
 }
 
-constexpr size_t WORD_ARRAY_SIZE = 2;
-
 void from_json(const json& j, Config& c) {
     j.at("mode").get_to(c.mode);
     j.at("algorithm").get_to(c.algorithm);
@@ -92,18 +91,18 @@ void from_json(const json& j, Config& c) {
     }
     if (j.contains("forbidden_words")) {
         auto isValidWord = [](const json& item) {
-            return item.is_array() && item.size() == WORD_ARRAY_SIZE && item[0].is_string() &&
-                   item[1].is_number_unsigned();
+            return item.is_array() && item.size() == WORD_LABEL_PHASE_PAIR_SIZE &&
+                   item[0].is_string() && item[1].is_number_unsigned();
         };
 
         std::vector<Word> processedWords;
         for (const auto& item : j.at("forbidden_words")) {
             if (!isValidWord(item)) {
                 throw std::invalid_argument(
-                    "Invalid format for forbidden_words. Each item must be [string, unsigned "
-                    "int].");
+                    "Invalid format for forbidden_words. Each item must be an array of the form "
+                    "[string, unsigned int].");
             }
-            processedWords.push_back(Word{item[0].get<std::string>(), item[1].get<unsigned int>()});
+            processedWords.emplace_back(item[0].get<std::string>(), item[1].get<unsigned int>());
         }
         c.forbidden_words = std::move(processedWords);
     }

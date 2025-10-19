@@ -26,6 +26,8 @@ struct Word {
     }
 };
 
+constexpr size_t WORD_LABEL_PHASE_PAIR_SIZE = 2;
+
 struct Config {
     std::string mode;
     std::string algorithm;
