@@ -139,7 +139,7 @@ int main(int argc, char* argv[]) {
         if (extension == ".csv") {
             csvFiles.push_back(configPath);
         } else if (extension.empty()) {
-            csvFiles = path::utils::getCsvFiles(configPath);
+            csvFiles = path::utils::getFiles(configPath, ".csv");
             if (csvFiles.empty()) {
                 io::utils::printErrorAndExit("No CSV files found in the specified directory.");
             }
