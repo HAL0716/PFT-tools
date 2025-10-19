@@ -5,20 +5,26 @@
 
 namespace path::utils {
 
-std::vector<std::string> getCsvFiles(const std::string& directoryPath) {
-    std::vector<std::string> csvFiles;
+bool matchesExt(const std::filesystem::path& filePath, const std::string& ext) {
+    return ext.empty() || filePath.extension() == (ext[0] == '.' ? ext : "." + ext);
+}
+
+std::vector<std::string> getFiles(const std::string& dirPath, const std::string& ext) {
+    std::vector<std::string> files;
 
     try {
-        for (const auto& entry : std::filesystem::directory_iterator(directoryPath)) {
-            if (entry.is_regular_file() && entry.path().extension() == ".csv") {
-                csvFiles.push_back(entry.path().string());
+        for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
+            if (entry.is_regular_file() && matchesExt(entry.path(), ext)) {
+                files.push_back(entry.path().string());
             }
         }
+    } catch (const std::filesystem::filesystem_error& e) {
+        std::cerr << "Filesystem error: " << e.what() << std::endl;
     } catch (const std::exception& e) {
         std::cerr << "Error: Failed to read directory: " << e.what() << std::endl;
     }
 
-    return csvFiles;
+    return files;
 }
 
 void genDirectory(const std::string& filePath) {

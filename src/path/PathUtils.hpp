@@ -5,8 +5,8 @@
 
 namespace path::utils {
 
-// 指定されたディレクトリ内のすべてのCSVファイルを取得する関数
-std::vector<std::string> getCsvFiles(const std::string& directoryPath);
+// 汎用的なファイル取得関数
+std::vector<std::string> getFiles(const std::string& dirPath, const std::string& ext = "");
 
 // 汎用的なパス抽出関数
 std::string extractPath(const std::string& filePath, int depth = 0, bool includeDir = true,
