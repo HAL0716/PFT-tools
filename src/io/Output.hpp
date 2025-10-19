@@ -19,8 +19,7 @@ bool writeSeqCsv(const std::string& filePath, const Graph& graph, unsigned int l
 
 // Graphviz関連
 bool writeDot(const std::string& filePath, const Graph& graph);
-bool dotToTeX(const std::string& dotFilePath, const std::string& texFilePath);
-bool texToPDF(const std::string& texFilePath, const std::string& pdfFilePath);
-bool pdfToPNG(const std::string& pdfFilePath, const std::string& pngFilePath);
+bool writePdf(const std::string& filePath, const Graph& graph);
+bool writePng(const std::string& filePath, const Graph& graph);
 
 }  // namespace io::output

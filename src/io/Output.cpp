@@ -39,10 +39,16 @@ bool write(const std::string& path, const std::string& data) {
 bool exec(const std::string& cmd) {
     int ret = std::system(cmd.c_str());
     if (ret != 0) {
-        std::cerr << "Error executing command: " << cmd << std::endl;
+        std::cerr << "Error executing command: " << cmd << " (Exit code: " << ret << ")"
+                  << std::endl;
         return false;
     }
     return true;
+}
+
+std::string replaceFileExt(const std::string& basePath, const std::string& extension) {
+    return path::getDirectory(basePath) + "/" + path::getFileName(basePath, false) + "." +
+           extension;
 }
 
 auto quote = [](const std::string& str) { return "\"" + str + "\""; };
@@ -128,29 +134,54 @@ bool writeDot(const std::string& filePath, const Graph& graph) {
     return write(filePath, oss.str());
 }
 
-bool dotToTeX(const std::string& dotFilePath, const std::string& texFilePath) {
+bool dotToTeX(const std::string& dotFilePath) {
     const std::string pythonPath = std::string(PYTHON_VENV_PATH) + "/bin/python3";
-    const std::string script =
+    const std::string scriptPath =
         (std::filesystem::path(PROJECT_SOURCE_DIR) / "scripts" / "convert_dot_to_tex.py").string();
-    const std::string cmd = quote(pythonPath) + " " + quote(script) + " " + quote(dotFilePath) +
+    const std::string texFilePath =
+        path::getDirectory(dotFilePath) + "/" + path::getFileName(dotFilePath, false) + ".tex";
+
+    const std::string cmd = quote(pythonPath) + " " + quote(scriptPath) + " " + quote(dotFilePath) +
                             " " + quote(texFilePath);
     return exec(cmd);
 }
 
-bool texToPDF(const std::string& texFilePath, const std::string& pdfFilePath) {
-    const std::string cmd = "pdflatex -interaction=nonstopmode -output-directory=" +
-                            quote(path::getDirectory(pdfFilePath)) + " " + quote(texFilePath) +
-                            " > /dev/null 2>&1";
+bool texToPDF(const std::string& texFilePath) {
+    const std::string directory = path::getDirectory(texFilePath);
+
+    const std::string cmd =
+        "pdflatex -interaction=nonstopmode -output-directory=" + quote(directory) + " " +
+        quote(texFilePath) + " > /dev/null 2>&1";
     return exec(cmd);
 }
 
-bool pdfToPNG(const std::string& pdfFilePath, const std::string& pngFilePath) {
+bool pdfToPNG(const std::string& pdfFilePath) {
+    const std::string directory = path::getDirectory(pdfFilePath);
     const std::string baseName = path::getFileName(pdfFilePath, false);
-    const std::string outputDir = path::getDirectory(pngFilePath);
 
     const std::string cmd = "pdftoppm -png -singlefile " + quote(pdfFilePath) + " " +
-                            quote(outputDir + "/" + baseName) + " > /dev/null 2>&1";
+                            quote(directory + "/" + baseName) + " > /dev/null 2>&1";
     return exec(cmd);
+}
+
+bool writePdf(const std::string& filePath, const Graph& graph) {
+    const std::string dotFilePath = replaceFileExt(filePath, "dot");
+    if (!writeDot(dotFilePath, graph)) {
+        return false;
+    }
+    const std::string texFilePath = replaceFileExt(filePath, "tex");
+    if (!dotToTeX(dotFilePath)) {
+        return false;
+    }
+    return texToPDF(texFilePath);
+}
+
+bool writePng(const std::string& filePath, const Graph& graph) {
+    const std::string pdfFilePath = replaceFileExt(filePath, "pdf");
+    if (!writePdf(pdfFilePath, graph)) {
+        return false;
+    }
+    return pdfToPNG(pdfFilePath);
 }
 
 }  // namespace io::output

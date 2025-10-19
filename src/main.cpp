@@ -82,31 +82,15 @@ void generateGraphFromJson(const std::string& configPath) {
                 } else if (format == "dot") {
                     const std::string filePath =
                         path::genFilePath(baseDirectory, forbiddenCombinations, "dot", "dot");
-                    if (!io::output::writeDot(filePath, graph)) {
-                        continue;
-                    }
-                } else if (format == "png") {
-                    const std::string dotFilePath =
-                        path::genFilePath(baseDirectory, forbiddenCombinations, "dot", "dot");
-                    const std::string texFilePath =
-                        path::genFilePath(baseDirectory, forbiddenCombinations, "tex", "tex");
-                    const std::string pdfFilePath =
+                    io::output::writeDot(filePath, graph);
+                } else if (format == "pdf") {
+                    const std::string filePath =
                         path::genFilePath(baseDirectory, forbiddenCombinations, "pdf", "pdf");
-                    const std::string pngFilePath = path::genFilePath(
-                        baseDirectory, forbiddenCombinations, "png", "png");
-
-                    if (!io::output::writeDot(dotFilePath, graph)) {
-                        continue;
-                    }
-                    if (!io::output::dotToTeX(dotFilePath, texFilePath)) {
-                        continue;
-                    }
-                    if (!io::output::texToPDF(texFilePath, pdfFilePath)) {
-                        continue;
-                    }
-                    if (!io::output::pdfToPNG(pdfFilePath, pngFilePath)) {
-                        continue;
-                    }
+                    io::output::writePdf(filePath, graph);
+                } else if (format == "png") {
+                    const std::string filePath =
+                        path::genFilePath(baseDirectory, forbiddenCombinations, "png", "png");
+                    io::output::writePng(filePath, graph);
                 } else {
                     io::utils::printErrorAndExit("Unknown output format: " + format);
                 }
