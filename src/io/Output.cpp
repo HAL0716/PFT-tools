@@ -52,11 +52,13 @@ auto quote = [](const std::string& str) { return "\"" + str + "\""; };
 bool writeCsv(const std::string& path, const CsvData& data) {
     std::ostringstream oss;
     for (const auto& row : data) {
-        oss << std::accumulate(row.begin(), row.end(), std::string(),
-                               [](const std::string& a, const std::string& b) {
-                                   return a.empty() ? b : a + "," + b;
-                               })
-            << "\n";
+        std::ostringstream row_oss;
+        for (size_t i = 0; i < row.size(); ++i) {
+            if (i != 0)
+                row_oss << ",";
+            row_oss << row[i];
+        }
+        oss << row_oss.str() << "\n";
     }
     return write(path, oss.str());
 }
