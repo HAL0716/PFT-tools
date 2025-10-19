@@ -195,7 +195,7 @@ bool writePng(const std::string& filePath, const Graph& graph) {
         return false;
     }
 
-    const std::string tempPngPath = tempDir + "/" + path::getFileName(filePath, false) + ".png";;
+    const std::string tempPngPath = tempDir + "/" + path::getFileName(filePath, false) + ".png";
     if (!pdfToPNG(tempPdfPath)) {
         return false;
     }
