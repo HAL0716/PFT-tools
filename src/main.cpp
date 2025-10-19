@@ -16,8 +16,8 @@
 #include "io/Input.hpp"
 #include "io/Output.hpp"
 #include "io/utils.hpp"
-#include "path/PathGenerator.hpp"
-#include "path/PathUtils.hpp"
+#include "path/Generator.hpp"
+#include "path/utils.hpp"
 #include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
 

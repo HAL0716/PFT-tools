@@ -9,8 +9,7 @@
 #include <stdexcept>
 
 #include "io/utils.hpp"
-#include "path/PathGenerator.hpp"
-#include "path/PathUtils.hpp"
+#include "path/utils.hpp"
 
 #ifndef PYTHON_VENV_PATH
 #define PYTHON_VENV_PATH ""

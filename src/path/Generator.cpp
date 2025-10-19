@@ -1,4 +1,4 @@
-#include "path/PathGenerator.hpp"
+#include "path/Generator.hpp"
 
 #include <filesystem>
 #include <iostream>

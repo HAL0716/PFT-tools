@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "path/PathUtils.hpp"
+#include "path/utils.hpp"
 
 // PathUtils クラスのテスト
 TEST(PathUtilsTest, extractPath) {
