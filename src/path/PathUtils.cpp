@@ -2,7 +2,6 @@
 
 #include <filesystem>
 #include <iostream>
-#include <sstream>
 
 namespace path::utils {
 
@@ -35,27 +34,44 @@ void genDirectory(const std::string& filePath) {
     }
 }
 
-std::string getDirectory(const std::string& filePath, int generations) {
-    if (generations <= 0) {
-        throw std::invalid_argument("Generations must be greater than 0");
+std::filesystem::path ascendDirectories(std::filesystem::path path, int depth) {
+    if (depth < 0) {
+        throw std::invalid_argument("Depth must be non-negative");
     }
 
-    std::filesystem::path path(filePath);
-
-    for (int i = 0; i < generations; ++i) {
-        if (path.has_parent_path()) {
-            path = path.parent_path();
-        } else {
-            throw std::out_of_range("Requested generations exceed the root directory");
+    for (int i = 0; i < depth; ++i) {
+        if (!path.has_parent_path() || path == path.root_path()) {
+            throw std::out_of_range("Depth exceeds the root directory");
         }
+        path = path.parent_path();
     }
-
-    return path.string();
+    return path;
 }
 
-std::string getFileName(const std::string& filePath, bool withExt) {
-    std::filesystem::path path(filePath);
-    return withExt ? path.filename().string() : path.stem().string();
+std::string extractPath(const std::string& filePath, int depth, bool includeDir, bool includeFile,
+                        bool includeExt) {
+    if (depth < 0) {
+        throw std::invalid_argument("Depth must be non-negative");
+    }
+
+    std::filesystem::path path(filePath), result;
+
+    // ディレクトリ部分を取得
+    if (includeDir) {
+        result = ascendDirectories(path.parent_path(), depth);
+    }
+
+    // ファイル名部分を取得
+    if (includeFile) {
+        result /= includeExt ? path.filename() : path.stem();
+    }
+
+    // 両方含めない場合は空文字列を返す
+    if (!includeDir && !includeFile) {
+        return "";
+    }
+
+    return result.string();
 }
 
 }  // namespace path::utils
