@@ -169,14 +169,14 @@ std::vector<std::vector<std::vector<Node>>> genForbiddenList(const Config& confi
 std::vector<std::vector<Node>> combineNodes(
     const std::vector<std::vector<std::vector<Node>>>& forbiddenList) {
     std::vector<std::vector<Node>> combinedNodes;
-    std::function<void(unsigned int, std::vector<Node>&)> dfs = [&](unsigned int depth,
-                                                                    std::vector<Node>& current) {
+    std::function<void(unsigned int, std::vector<Node>)> dfs = [&](unsigned int depth,
+                                                                   std::vector<Node> current) {
         if (depth == forbiddenList.size()) {
-            combinedNodes.push_back(std::move(current));
+            combinedNodes.push_back(current);
             return;
         }
         for (const auto& nodes : forbiddenList[depth]) {
-            std::vector<Node> next = current;
+            auto next = current;
             next.insert(next.end(), nodes.begin(), nodes.end());
             dfs(depth + 1, next);
         }
