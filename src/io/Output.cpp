@@ -181,7 +181,11 @@ bool writePdf(const std::string& filePath, const Graph& graph) {
     }
 
     const std::string finalPdfPath = filePath;
-    std::filesystem::rename(tempPdfPath, finalPdfPath);
+    try {
+        std::filesystem::rename(tempPdfPath, finalPdfPath);
+    } catch (const std::filesystem::filesystem_error& e) {
+        io::utils::printErrorAndExit("Failed to rename file: " + std::string(e.what()));
+    }
 
     std::filesystem::remove_all(tempDir);
 
@@ -203,7 +207,11 @@ bool writePng(const std::string& filePath, const Graph& graph) {
     }
 
     const std::string finalPngPath = filePath;
-    std::filesystem::rename(tempPngPath, finalPngPath);
+    try {
+        std::filesystem::rename(tempPngPath, finalPngPath);
+    } catch (const std::filesystem::filesystem_error& e) {
+        io::utils::printErrorAndExit("Failed to rename file: " + std::string(e.what()));
+    }
 
     std::filesystem::remove_all(tempDir);
 
