@@ -142,7 +142,7 @@ std::vector<std::vector<std::vector<Node>>> genForbiddenList(const Config& confi
             ") is less than config.period (" + std::to_string(config.period) +
             "). Check your configuration to avoid truncation.");
     }
-    unsigned int period = std::min(config.period, static_cast<unsigned int>(perPosition.size()));
+    unsigned int period = config.period;
 
     for (unsigned int p = 0; p < period; ++p) {
         unsigned int n = perPosition[p];
