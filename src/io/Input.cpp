@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "core/constants.hpp"
 #include "io/utils.hpp"
 #include "nlohmann/json.hpp"
 #include "utils/CombinationUtils.hpp"
