@@ -46,11 +46,6 @@ bool exec(const std::string& cmd) {
     return true;
 }
 
-std::string replaceFileExt(const std::string& basePath, const std::string& extension) {
-    return path::getDirectory(basePath) + "/" + path::getFileName(basePath, false) + "." +
-           extension;
-}
-
 auto quote = [](const std::string& str) { return "\"" + str + "\""; };
 
 // CSV関連
@@ -165,23 +160,52 @@ bool pdfToPNG(const std::string& pdfFilePath) {
 }
 
 bool writePdf(const std::string& filePath, const Graph& graph) {
-    const std::string dotFilePath = replaceFileExt(filePath, "dot");
+    const std::string tempDir = path::getDirectory(filePath) + "/temp";
+    path::genDirectory(tempDir);
+
+    const std::string dotFilePath = tempDir + "/" + path::getFileName(filePath, false) + ".dot";
     if (!writeDot(dotFilePath, graph)) {
         return false;
     }
-    const std::string texFilePath = replaceFileExt(filePath, "tex");
+
+    const std::string texFilePath = tempDir + "/" + path::getFileName(filePath, false) + ".tex";
     if (!dotToTeX(dotFilePath)) {
         return false;
     }
-    return texToPDF(texFilePath);
+
+    const std::string tempPdfPath = tempDir + "/" + path::getFileName(filePath, false) + ".pdf";
+    if (!texToPDF(texFilePath)) {
+        return false;
+    }
+
+    const std::string finalPdfPath = filePath;
+    std::filesystem::rename(tempPdfPath, finalPdfPath);
+
+    std::filesystem::remove_all(tempDir);
+
+    return true;
 }
 
 bool writePng(const std::string& filePath, const Graph& graph) {
-    const std::string pdfFilePath = replaceFileExt(filePath, "pdf");
-    if (!writePdf(pdfFilePath, graph)) {
+    const std::string tempDir = path::getDirectory(filePath) + "/temp";
+    path::genDirectory(tempDir);
+
+    const std::string tempPdfPath = tempDir + "/" + path::getFileName(filePath, false) + ".pdf";
+    if (!writePdf(tempPdfPath, graph)) {
         return false;
     }
-    return pdfToPNG(pdfFilePath);
+
+    const std::string tempPngPath = tempDir + "/" + path::getFileName(filePath, false) + ".png";;
+    if (!pdfToPNG(tempPdfPath)) {
+        return false;
+    }
+
+    const std::string finalPngPath = filePath;
+    std::filesystem::rename(tempPngPath, finalPngPath);
+
+    std::filesystem::remove_all(tempDir);
+
+    return true;
 }
 
 }  // namespace io::output
