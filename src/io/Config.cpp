@@ -77,6 +77,8 @@ void from_json(const json& j, OutputConfig& o) {
     j.at("directory").get_to(o.directory);
 }
 
+constexpr size_t WORD_ARRAY_SIZE = 2;
+
 void from_json(const json& j, Config& c) {
     j.at("mode").get_to(c.mode);
     j.at("algorithm").get_to(c.algorithm);
@@ -90,7 +92,7 @@ void from_json(const json& j, Config& c) {
     }
     if (j.contains("forbidden_words")) {
         auto isValidWord = [](const json& item) {
-            return item.is_array() && item.size() == 2 && item[0].is_string() &&
+            return item.is_array() && item.size() == WORD_ARRAY_SIZE && item[0].is_string() &&
                    item[1].is_number_unsigned();
         };
 
