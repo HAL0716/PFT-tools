@@ -20,9 +20,7 @@ const std::vector<Node>& Graph::getNodes() const {
 
 // エッジリストを取得
 const std::vector<Edge>& Graph::getEdges(const mode& mode) const {
-    if (mode == mode::Normal) {
-        return edges;
-    } else if (mode == mode::ID) {
+    if (mode == mode::ID) {
         // ノードからインデックスへのマッピングを作成
         std::unordered_map<Node, size_t> toIdx;
         for (size_t i = 0; i < nodes.size(); ++i) {
@@ -38,6 +36,8 @@ const std::vector<Edge>& Graph::getEdges(const mode& mode) const {
             idEdges.emplace_back(src, tgt, edge.getLabel());
         }
         return idEdges;
+    } else {
+        return edges;
     }
 }
 
