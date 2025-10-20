@@ -36,8 +36,8 @@ void GenericConfig::validate() const {
     if (opt_mode.empty()) {
         throw std::invalid_argument("Optimization mode cannot be empty.");
     }
-    if (alphabet == 0) {
-        throw std::invalid_argument("Alphabet size must be greater than 2.");
+    if (alphabet < 2) {
+        throw std::invalid_argument("Alphabet size must be at least 2.");
     }
     if (mode == "custom" && period == 0) {
         throw std::invalid_argument("Period must be greater than 0.");
