@@ -24,7 +24,7 @@ bool writePng(const std::string& filePath, const Graph& graph);
 
 template <typename PathGen, typename WriteFunc>
 bool writeGraph(const std::string& type, const std::string& ext, const PathGen& pathGen,
-                WriteFunc writeFunc, Graph& graph) {
+                WriteFunc writeFunc, const Graph& graph) {
     const std::string filePath = pathGen(type, ext);
     return writeFunc(filePath, graph);
 }
