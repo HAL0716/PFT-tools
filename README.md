@@ -71,12 +71,12 @@ pft-tools --config <エッジリスト>.csv --format edges --sequences <長さ>
       "nodes": [             // 禁止語リスト
         {
           "word": "000",     // 禁止語
-          "pos": 0           // 位置
+          "phase": 0         // 位置
         },
         {
           "word": "11",
-          "pos": 1
-        },
+          "phase": 1
+        }
       ]
     }
   },
