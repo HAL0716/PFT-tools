@@ -59,21 +59,33 @@ std::filesystem::path ascendDir(std::filesystem::path path, int depth) {
 
 std::string extractPath(const std::string& filePath, int depth, bool includeDir, bool includeFile,
                         bool includeExt) {
+    if (!includeDir && !includeFile && !includeExt) {
+        return "";
+    }
     if (depth < 0) {
         throw std::invalid_argument("Depth must be non-negative");
     }
+    if (includeDir && !includeFile && includeExt) {
+        throw std::invalid_argument(
+            "Cannot include both directory path and extension without including the file name");
+    }
 
-    std::filesystem::path path(filePath), result;
+    std::filesystem::path path(filePath);
+    std::filesystem::path result;
 
     if (includeDir) {
         result = ascendDir(path.parent_path(), depth);
     }
 
     if (includeFile) {
-        result /= includeExt ? path.filename() : path.stem();
+        result /= path.stem();
     }
 
-    return includeDir || includeFile ? result.string() : "";
+    if (includeExt) {
+        result += path.extension();
+    }
+
+    return result.string();
 }
 
 }  // namespace path::utils
