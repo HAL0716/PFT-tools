@@ -59,6 +59,9 @@ std::filesystem::path ascendDir(std::filesystem::path path, int depth) {
 
 std::string extractPath(const std::string& filePath, int depth, bool includeDir, bool includeFile,
                         bool includeExt) {
+    if (!includeDir && !includeFile && !includeExt) {
+        return "";
+    }
     if (depth < 0) {
         throw std::invalid_argument("Depth must be non-negative");
     }
