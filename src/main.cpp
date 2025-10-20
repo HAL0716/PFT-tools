@@ -58,57 +58,41 @@ int main(int argc, char* argv[]) {
                 generatorMap = {
                     {"Beal",
                      [](const Config& config) {
-                         return std::make_unique<Beal>(config.alphabet_size, config.period,
-                                                       config.forbidden_word_length.value_or(0));
+                         return std::make_unique<Beal>(config.generation.alphabet, config.generation.period);
                      }},
                     {"DeBruijn", [](const Config& config) {
-                         return std::make_unique<DeBruijn>(config.alphabet_size, config.period,
-                                                           config.forbidden_word_length.value());
+                         return std::make_unique<DeBruijn>(config.generation.alphabet,
+                                                           config.generation.period,
+                                                           config.generation.forbidden.length);
                      }}};
 
-            auto it = generatorMap.find(config.algorithm);
+            auto it = generatorMap.find(config.generation.algorithm);
             if (it == generatorMap.end()) {
-                io::utils::printErrorAndExit("Unknown algorithm: " + config.algorithm);
+                io::utils::printErrorAndExit("Unknown algorithm: " + config.generation.algorithm);
             }
 
             std::unique_ptr<GraphGenerator> generator = it->second(config);
 
-            try {
-                for (const auto& forbiddenCombinations : forbiddenNodes) {
-                    Graph graph = generator->generate(forbiddenCombinations);
+            for (const auto& forbiddenCombinations : forbiddenNodes) {
+                Graph graph = generator->generate(forbiddenCombinations);
 
-                    if (config.sink_less) {
-                        graph = cleanGraph(graph);
-                        if (config.minimize) {
-                            graph = Moore::apply(graph);
-                        }
-                    }
-
-                    for (const auto& format : config.output.formats) {
-                        path::Generator pathGenerator(config, forbiddenCombinations);
-
-                        if (format == "edges") {
-                            const std::string filePath = pathGenerator.genFilePath("edges", "csv");
-                            io::output::writeEdgesCsv(filePath, graph);
-                        } else if (format == "matrix") {
-                            const std::string filePath = pathGenerator.genFilePath("matrix", "csv");
-                            io::output::writeMatrixCsv(filePath, graph);
-                        } else if (format == "dot") {
-                            const std::string filePath = pathGenerator.genFilePath("dot", "dot");
-                            io::output::writeDot(filePath, graph);
-                        } else if (format == "pdf") {
-                            const std::string filePath = pathGenerator.genFilePath("pdf", "pdf");
-                            io::output::writePdf(filePath, graph);
-                        } else if (format == "png") {
-                            const std::string filePath = pathGenerator.genFilePath("png", "png");
-                            io::output::writePng(filePath, graph);
-                        } else {
-                            io::utils::printErrorAndExit("Unknown output format: " + format);
-                        }
-                    }
+                if (config.generation.opt_mode == "sink_less") {
+                    graph = cleanGraph(graph);
+                } else if (config.generation.opt_mode == "minimize") {
+                    graph = cleanGraph(graph);
+                    graph = Moore::apply(graph);
                 }
-            } catch (const std::exception& e) {
-                io::utils::printErrorAndExit(e.what());
+
+                path::Generator pathGenerator(config, forbiddenCombinations);
+
+                if (config.output.edge_list) {
+                    const std::string filePath = pathGenerator.genFilePath("edges", "csv");
+                    io::output::writeEdgesCsv(filePath, graph);
+                }
+                if (config.output.png_file) {
+                    const std::string filePath = pathGenerator.genFilePath("graph", "png");
+                    io::output::writePng(filePath, graph);
+                }
             }
         } else if (extension == ".csv" || extension.empty()) {
             if (format != "edges" && format != "matrix") {
