@@ -1,31 +1,20 @@
 #include <iostream>
-#include <map>      // std::map
-#include <memory>   // std::unique_ptr
-#include <numeric>  // std::transform_reduce
+#include <memory>  // std::unique_ptr
 #include <string>
 
-#include "algorithm/Beal.hpp"
-#include "algorithm/DeBruijn.hpp"
 #include "algorithm/GeneratorFactory.hpp"
 #include "algorithm/Moore.hpp"
 #include "analysis/eigenvalues.hpp"
 #include "cli/Parser.hpp"
 #include "core/Graph.hpp"
-#include "core/Node.hpp"
-#include "core/constants.hpp"
 #include "io/Config.hpp"
 #include "io/Input.hpp"
 #include "io/Output.hpp"
 #include "io/utils.hpp"
 #include "path/Generator.hpp"
 #include "path/utils.hpp"
-#include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
 
-using Config = io::type::Config;
-using json = nlohmann::json;
-
-// Rename the helper function and reorganize the arguments
 template <typename PathGen, typename WriteFunc>
 void writeGraph(const std::string& type, const std::string& ext, const PathGen& pathGen,
                 WriteFunc writeFunc, Graph& graph) {
