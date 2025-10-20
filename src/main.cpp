@@ -35,11 +35,11 @@ int main(int argc, char* argv[]) {
     unsigned int seqLength = 0;
 
     app.add_option("--input", inputPath, "Input file or directory path (JSON or CSV)")->required();
-    app.add_option("--format", format, "Input format: edges, matrix, or directory");
-    app.add_flag("--matrix", isMatrix, "Input CSV files are adjacency matrices");
+    app.add_option("--format", format, "Input format: edges or matrix");
+    app.add_flag("--matrix", isMatrix, "Generate adjacency matrix CSV files");
     app.add_flag("--pdf", pdf, "Generate PDF files");
     app.add_flag("--max-eig", maxEig, "Calculate max eigenvalue");
-    app.add_option("--sequences", seqLength, "Length of edge label sequences");
+    app.add_option("--sequences", seqLength, "Calculate length of edge label sequences");
 
     CLI11_PARSE(app, argc, argv);
 
@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
                 std::string directory = path::utils::extractPath(csvFile, 2, true, false, false);
                 std::string fileName = path::utils::extractPath(csvFile, 0, false, true, false);
 
-                if (isMatrix) {
+                if (format != "matrix" && isMatrix) {
                     std::string filePath = directory + "/matrix/" + fileName + ".csv";
                     io::output::writeMatrixCsv(filePath, graph);
                 }
