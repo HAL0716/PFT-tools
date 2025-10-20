@@ -141,7 +141,7 @@ std::vector<std::vector<std::vector<Node>>> genForbiddenList(const Config& confi
         unsigned int n = position[p];
         if (n > words.size()) {
             io::utils::printErrorAndExit(
-                "forbidden_per_position value exceeds total combinations.");
+                "forbidden.position value exceeds total combinations.");
         }
 
         std::vector<Node> forbiddenNodes;
@@ -187,7 +187,7 @@ std::vector<std::vector<Node>> genNodesFromConfig(const Config& config) {
             forbiddenNodes.emplace_back(nodes.label, nodes.phase);
         }
         if (forbiddenNodes.empty()) {
-            io::utils::printErrorAndExit("forbidden_words is empty.");
+            io::utils::printErrorAndExit("forbidden.nodes is empty.");
         }
         return {std::move(forbiddenNodes)};
     } else if (config.generation.mode == "all-patterns") {
