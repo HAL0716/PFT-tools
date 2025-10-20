@@ -62,8 +62,12 @@ std::string extractPath(const std::string& filePath, int depth, bool includeDir,
     if (depth < 0) {
         throw std::invalid_argument("Depth must be non-negative");
     }
+    if (includeDir && !includeFile && includeExt) {
+        throw std::invalid_argument("Cannot include extension without including file name");
+    }
 
-    std::filesystem::path path(filePath), result;
+    std::filesystem::path path(filePath);
+    std::filesystem::path result;
 
     if (includeDir) {
         result = ascendDir(path.parent_path(), depth);
