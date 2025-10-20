@@ -81,13 +81,7 @@ int main(int argc, char* argv[]) {
                 }
             }
         } else if (extension == ".csv" || extension.empty()) {
-            if (options.format != "edges" && options.format != "matrix") {
-                io::utils::printErrorAndExit("Invalid format specified. Use 'edges' or 'matrix'.");
-            } else if (!options.maxEig && options.seqLength == 0 && !options.isMatrix &&
-                       !options.pdf) {
-                io::utils::printErrorAndExit(
-                    "For CSV input, either --max-eig or --sequences must be specified.");
-            }
+            cliParser.validate();
 
             std::vector<std::string> csvFiles;
             if (extension == ".csv") {
