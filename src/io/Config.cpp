@@ -129,7 +129,7 @@ void from_json(const json& j, GenericConfig& g) {
         if (forbidden.contains("nodes")) {
             for (const auto& item : forbidden.at("nodes")) {
                 g.forbidden.nodes.emplace_back(item.at("word").get<std::string>(),
-                                               item.at("pos").get<unsigned int>());
+                                               item.at("phase").get<unsigned int>());
             }
         }
         if (forbidden.contains("length")) {
