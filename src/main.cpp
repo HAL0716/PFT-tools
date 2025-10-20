@@ -109,13 +109,14 @@ std::string getFileExtension(const std::string& filePath) {
 int main(int argc, char* argv[]) {
     CLI::App app{"PFT-tools"};
 
-    std::string configPath;
+    std::string inputPath;
     std::string format;
     bool maxEigenvalue = false;
     unsigned int sequencesLength = 0;
 
-    app.add_option("--config", configPath, "Path to the configuration file or directory")
-        ->required();
+    auto inputOpt =
+        app.add_option("--input", inputPath, "Input file or directory path (JSON or CSV)");
+
     app.add_option("--format", format, "Input format: edges, matrix, or directory");
     app.add_flag("--max-eig", maxEigenvalue, "Calculate the maximum eigenvalue");
     app.add_option("--sequences", sequencesLength, "Length of edge label sequences to retrieve");
@@ -123,52 +124,57 @@ int main(int argc, char* argv[]) {
     CLI11_PARSE(app, argc, argv);
 
     try {
-        std::string extension = getFileExtension(configPath);
+        if (inputPath.empty()) {
+            io::utils::printErrorAndExit("The --input option must be specified.");
+        }
+
+        std::string extension = getFileExtension(inputPath);
 
         if (extension == ".json") {
-            generateGraphFromJson(configPath);
-            return 0;
-        }
+            generateGraphFromJson(inputPath);
+        } else if (extension == ".csv" || extension.empty()) {
+            if (format != "edges" && format != "matrix") {
+                io::utils::printErrorAndExit(
+                    "Invalid format specified. Use 'edges', 'matrix', or 'directory'.");
+            }
 
-        if (format != "edges" && format != "matrix") {
-            io::utils::printErrorAndExit(
-                "Invalid format specified. Use 'edges', 'matrix', or 'directory'.");
-        }
+            std::vector<std::string> csvFiles;
+            if (extension == ".csv") {
+                csvFiles.push_back(inputPath);
+            } else {
+                csvFiles = path::utils::getFiles(inputPath, ".csv");
+            }
 
-        std::vector<std::string> csvFiles;
-        if (extension == ".csv") {
-            csvFiles.push_back(configPath);
-        } else if (extension.empty()) {
-            csvFiles = path::utils::getFiles(configPath, ".csv");
             if (csvFiles.empty()) {
                 io::utils::printErrorAndExit("No CSV files found in the specified directory.");
             }
+
+            for (const auto& csvFile : csvFiles) {
+                Graph graph;
+                if (format == "edges") {
+                    if (!io::input::readEdgesCSV(csvFile, graph)) {
+                        continue;
+                    }
+                } else if (format == "matrix") {
+                    if (!io::input::readMatrixCSV(csvFile, graph)) {
+                        continue;
+                    }
+                }
+
+                if (sequencesLength > 0 && format == "edges") {
+                    std::string directory =
+                        path::utils::extractPath(csvFile, 2, true, false, false);
+                    std::string fileName = path::utils::extractPath(csvFile, 0, false, true, true);
+                    std::string filePath = directory + "/sequences/" + fileName;
+                    io::output::writeSeqCsv(filePath, graph, sequencesLength);
+                }
+
+                if (maxEigenvalue) {
+                    std::cout << "Max Eigenvalue: " << calculateMaxEigenvalue(graph) << std::endl;
+                }
+            }
         } else {
             io::utils::printErrorAndExit("Unsupported file extension: " + extension);
-        }
-
-        for (const auto& csvFile : csvFiles) {
-            Graph graph;
-            if (format == "edges") {
-                if (!io::input::readEdgesCSV(csvFile, graph)) {
-                    continue;
-                }
-            } else if (format == "matrix") {
-                if (!io::input::readMatrixCSV(csvFile, graph)) {
-                    continue;
-                }
-            }
-
-            if (sequencesLength > 0 && format == "edges") {
-                std::string directory = path::utils::extractPath(csvFile, 2, true, false, false);
-                std::string fileName = path::utils::extractPath(csvFile, 0, false, true, true);
-                std::string filePath = directory + "/sequences/" + fileName;
-                io::output::writeSeqCsv(filePath, graph, sequencesLength);
-            }
-
-            if (maxEigenvalue) {
-                std::cout << "Max Eigenvalue: " << calculateMaxEigenvalue(graph) << std::endl;
-            }
         }
     } catch (const std::exception& e) {
         io::utils::printErrorAndExit(e.what());
