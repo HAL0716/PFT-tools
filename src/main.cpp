@@ -24,6 +24,14 @@
 using Config = io::type::Config;
 using json = nlohmann::json;
 
+// Rename the helper function and reorganize the arguments
+template <typename PathGen, typename WriteFunc>
+void writeGraph(const std::string& type, const std::string& ext, const PathGen& pathGen,
+                WriteFunc writeFunc, Graph& graph) {
+    const std::string filePath = pathGen(type, ext);
+    writeFunc(filePath, graph);
+}
+
 int main(int argc, char* argv[]) {
     CLI::Parser cliParser;
     auto options = cliParser.parse(argc, argv);
@@ -70,13 +78,16 @@ int main(int argc, char* argv[]) {
 
                 path::Generator pathGenerator(config, forbiddenNodes);
 
+                auto generateFilePath = [&](const std::string& type, const std::string& ext) {
+                    return pathGenerator.genFilePath(type, ext);
+                };
+
                 if (config.output.edge_list) {
-                    const std::string filePath = pathGenerator.genFilePath("edges", "csv");
-                    io::output::writeEdgesCsv(filePath, graph);
+                    writeGraph("edges", "csv", generateFilePath, io::output::writeEdgesCsv, graph);
                 }
+
                 if (config.output.png_file) {
-                    const std::string filePath = pathGenerator.genFilePath("graph", "png");
-                    io::output::writePng(filePath, graph);
+                    writeGraph("graph", "png", generateFilePath, io::output::writePng, graph);
                 }
             }
         } else if (extension == ".csv" || extension.empty()) {
@@ -102,24 +113,31 @@ int main(int argc, char* argv[]) {
                 std::string directory = path::utils::extractPath(csvFile, 2, true, false, false);
                 std::string fileName = path::utils::extractPath(csvFile, 0, false, true, false);
 
+                auto generateFilePath = [&](const std::string& type, const std::string& ext) {
+                    return directory + "/" + type + "/" + fileName + "." + ext;
+                };
+
                 if (options.format != "matrix" && options.isMatrix) {
-                    std::string filePath = directory + "/matrix/" + fileName + ".csv";
-                    io::output::writeMatrixCsv(filePath, graph);
+                    writeGraph("matrix", "csv", generateFilePath, io::output::writeMatrixCsv,
+                               graph);
                 }
 
                 if (options.pdf) {
-                    std::string pdfPath = directory + "/graph/" + fileName + ".pdf";
-                    io::output::writePdf(pdfPath, graph);
+                    writeGraph("graph", "pdf", generateFilePath, io::output::writePdf, graph);
+                }
+
+                auto writeSeqCsvWithLength = [&](const std::string& filePath, const Graph& graph) {
+                    io::output::writeSeqCsv(filePath, graph, options.seqLength);
+                };
+
+                if (options.seqLength > 0) {
+                    writeGraph("sequences", "csv", generateFilePath, writeSeqCsvWithLength, graph);
                 }
 
                 if (options.maxEig) {
-                    std::cout << fileName << ": Max Eigenvalue = " << calculateMaxEigenvalue(graph)
+                    std::cout << fileName
+                              << ": Max Eigenvalue = " << calculateMaxEigenvalue(graph)
                               << std::endl;
-                }
-
-                if (options.seqLength > 0) {
-                    std::string filePath = directory + "/sequences/" + fileName + ".csv";
-                    io::output::writeSeqCsv(filePath, graph, options.seqLength);
                 }
             }
         } else {
