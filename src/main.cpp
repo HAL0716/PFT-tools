@@ -23,9 +23,11 @@ void writeGraph(const std::string& type, const std::string& ext, const PathGen& 
 }
 
 void handleInputJson(const CLI::Parser::ParsedOptions& options) {
+    io::utils::logMessage("Processing JSON input: " + options.inputPath);
+
     io::type::Config config;
     if (!io::input::readConfigJson(options.inputPath, config)) {
-        io::utils::printErrorAndExit("Failed to load config.");
+        io::utils::printErrorAndExit("[ERROR] Failed to load config from: " + options.inputPath);
     }
 
     std::unique_ptr<GraphGenerator> generator = GeneratorFactory::create(config);
@@ -35,8 +37,10 @@ void handleInputJson(const CLI::Parser::ParsedOptions& options) {
         Graph graph = generator->generate(forbiddenNodes);
 
         if (config.generation.opt_mode == "sink_less") {
+            io::utils::logMessage("Applying sink-less optimization.");
             graph = cleanGraph(graph);
         } else if (config.generation.opt_mode == "minimize") {
+            io::utils::logMessage("Applying minimize optimization.");
             graph = cleanGraph(graph);
             graph = Moore::apply(graph);
         }
@@ -48,30 +52,37 @@ void handleInputJson(const CLI::Parser::ParsedOptions& options) {
         };
 
         if (config.output.edge_list) {
+            io::utils::logMessage("Writing edge list to CSV.");
             writeGraph("edges", "csv", generateFilePath, io::output::writeEdgesCsv, graph);
         }
 
         if (config.output.png_file) {
+            io::utils::logMessage("Writing graph to PNG.");
             writeGraph("graph", "png", generateFilePath, io::output::writePng, graph);
         }
     }
 }
 
 void handleInputCSV(const CLI::Parser::ParsedOptions& options, const std::string& extension) {
+    io::utils::logMessage("Processing CSV input: " + options.inputPath);
 
     std::vector<std::string> csvFiles = (extension == ".csv")
                                             ? std::vector<std::string>{options.inputPath}
                                             : path::utils::getFiles(options.inputPath, ".csv");
 
     if (csvFiles.empty()) {
-        io::utils::printErrorAndExit("No CSV files found in the specified directory.");
+        io::utils::printErrorAndExit("[ERROR] No CSV files found in the specified directory: " +
+                                     options.inputPath);
     }
 
     for (const auto& csvFile : csvFiles) {
+        io::utils::logMessage("Reading CSV file: " + csvFile);
+
         Graph graph;
         bool success = (options.format == "edges") ? io::input::readEdgesCSV(csvFile, graph)
                                                    : io::input::readMatrixCSV(csvFile, graph);
         if (!success) {
+            io::utils::logMessage("[WARNING] Failed to read CSV file: " + csvFile);
             continue;
         }
 
@@ -83,10 +94,12 @@ void handleInputCSV(const CLI::Parser::ParsedOptions& options, const std::string
         };
 
         if (options.format != "matrix" && options.isMatrix) {
+            io::utils::logMessage("Writing matrix to CSV.");
             writeGraph("matrix", "csv", generateFilePath, io::output::writeMatrixCsv, graph);
         }
 
         if (options.pdf) {
+            io::utils::logMessage("Writing graph to PDF.");
             writeGraph("graph", "pdf", generateFilePath, io::output::writePdf, graph);
         }
 
@@ -95,12 +108,13 @@ void handleInputCSV(const CLI::Parser::ParsedOptions& options, const std::string
         };
 
         if (options.seqLength > 0) {
+            io::utils::logMessage("Writing sequences to CSV.");
             writeGraph("sequences", "csv", generateFilePath, writeSeqCsvWithLength, graph);
         }
 
         if (options.maxEig) {
-            std::cout << fileName << ": Max Eigenvalue = " << calculateMaxEigenvalue(graph)
-                      << std::endl;
+            double maxEig = calculateMaxEigenvalue(graph);
+            io::utils::logMessage(fileName + ": Max Eigenvalue = " + std::to_string(maxEig));
         }
     }
 }
@@ -118,10 +132,10 @@ int main(int argc, char* argv[]) {
             cliParser.validate();
             handleInputCSV(options, extension);
         } else {
-            io::utils::printErrorAndExit("Unsupported file extension: " + extension);
+            io::utils::printErrorAndExit("[ERROR] Unsupported file extension: " + extension);
         }
     } catch (const std::exception& e) {
-        io::utils::printErrorAndExit(e.what());
+        io::utils::printErrorAndExit("[ERROR] " + std::string(e.what()));
     }
 
     return 0;

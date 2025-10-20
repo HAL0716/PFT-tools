@@ -47,4 +47,13 @@ inline void printErrorAndExit(const std::string& message) {
     std::exit(1);
 }
 
+/**
+ * @brief ログメッセージを出力する
+ *
+ * @param message 出力するログメッセージ
+ */
+inline void logMessage(const std::string& message) {
+    std::cout << "[INFO] " << message << std::endl;
+}
+
 }  // namespace io::utils
