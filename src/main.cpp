@@ -97,15 +97,6 @@ void generateGraphFromJson(const std::string& configPath) {
     }
 }
 
-// ファイルパスから拡張子を取得する関数
-std::string getFileExtension(const std::string& filePath) {
-    size_t dotPos = filePath.rfind('.');
-    if (dotPos != std::string::npos) {
-        return filePath.substr(dotPos);
-    }
-    return "";
-}
-
 int main(int argc, char* argv[]) {
     CLI::App app{"PFT-tools"};
 
@@ -128,7 +119,7 @@ int main(int argc, char* argv[]) {
             io::utils::printErrorAndExit("The --input option must be specified.");
         }
 
-        std::string extension = getFileExtension(inputPath);
+        auto extension = path::utils::extractPath(inputPath, 0, false, false, true);
 
         if (extension == ".json") {
             generateGraphFromJson(inputPath);
