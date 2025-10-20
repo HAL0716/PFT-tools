@@ -6,6 +6,7 @@
 
 #include "algorithm/Beal.hpp"
 #include "algorithm/DeBruijn.hpp"
+#include "algorithm/GeneratorFactory.hpp"
 #include "algorithm/Moore.hpp"
 #include "analysis/eigenvalues.hpp"
 #include "cli/Parser.hpp"
@@ -45,25 +46,7 @@ int main(int argc, char* argv[]) {
                 io::utils::printErrorAndExit("Failed to load config.");
             }
 
-            static const std::map<std::string,
-                                  std::function<std::unique_ptr<GraphGenerator>(const Config&)>>
-                generatorMap = {{"Beal",
-                                 [](const Config& config) {
-                                     return std::make_unique<Beal>(config.generation.alphabet,
-                                                                   config.generation.period);
-                                 }},
-                                {"DeBruijn", [](const Config& config) {
-                                     return std::make_unique<DeBruijn>(
-                                         config.generation.alphabet, config.generation.period,
-                                         config.generation.forbidden.length);
-                                 }}};
-
-            auto it = generatorMap.find(config.generation.algorithm);
-            if (it == generatorMap.end()) {
-                io::utils::printErrorAndExit("Unknown algorithm: " + config.generation.algorithm);
-            }
-
-            std::unique_ptr<GraphGenerator> generator = it->second(config);
+            std::unique_ptr<GraphGenerator> generator = GeneratorFactory::create(config);
 
             auto forbiddenNodesList = io::input::genNodesFromConfig(config);
             for (const auto& forbiddenNodes : forbiddenNodesList) {
@@ -135,8 +118,7 @@ int main(int argc, char* argv[]) {
                 }
 
                 if (options.maxEig) {
-                    std::cout << fileName
-                              << ": Max Eigenvalue = " << calculateMaxEigenvalue(graph)
+                    std::cout << fileName << ": Max Eigenvalue = " << calculateMaxEigenvalue(graph)
                               << std::endl;
                 }
             }
