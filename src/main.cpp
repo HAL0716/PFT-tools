@@ -15,13 +15,6 @@
 #include "path/utils.hpp"
 #include "utils/GraphUtils.hpp"
 
-template <typename PathGen, typename WriteFunc>
-void writeGraph(const std::string& type, const std::string& ext, const PathGen& pathGen,
-                WriteFunc writeFunc, Graph& graph) {
-    const std::string filePath = pathGen(type, ext);
-    writeFunc(filePath, graph);
-}
-
 void handleInputJson(const CLI::Parser::ParsedOptions& options) {
     io::utils::logMessage("Processing JSON input: " + options.inputPath);
 
@@ -52,13 +45,15 @@ void handleInputJson(const CLI::Parser::ParsedOptions& options) {
         };
 
         if (config.output.edge_list) {
-            io::utils::logMessage("Writing edge list to CSV.");
-            writeGraph("edges", "csv", generateFilePath, io::output::writeEdgesCsv, graph);
+            if (io::output::writeGraph("edges", "csv", generateFilePath, io::output::writeEdgesCsv, graph)) {
+                io::utils::logMessage("Writing edge list to CSV.");
+            }
         }
 
         if (config.output.png_file) {
-            io::utils::logMessage("Writing graph to PNG.");
-            writeGraph("graph", "png", generateFilePath, io::output::writePng, graph);
+            if (io::output::writeGraph("graph", "png", generateFilePath, io::output::writePng, graph)) {
+                io::utils::logMessage("Writing graph to PNG.");
+            }
         }
     }
 }
@@ -94,22 +89,23 @@ void handleInputCSV(const CLI::Parser::ParsedOptions& options, const std::string
         };
 
         if (options.format != "matrix" && options.isMatrix) {
-            io::utils::logMessage("Writing matrix to CSV.");
-            writeGraph("matrix", "csv", generateFilePath, io::output::writeMatrixCsv, graph);
+            io::utils::logMessage("Writing adjacency matrix to CSV.");
+            io::output::writeGraph("matrix", "csv", generateFilePath, io::output::writeMatrixCsv, graph);
         }
 
         if (options.pdf) {
             io::utils::logMessage("Writing graph to PDF.");
-            writeGraph("graph", "pdf", generateFilePath, io::output::writePdf, graph);
+            io::output::writeGraph("graph", "pdf", generateFilePath, io::output::writePdf, graph);
         }
 
         auto writeSeqCsvWithLength = [&](const std::string& filePath, const Graph& graph) {
-            io::output::writeSeqCsv(filePath, graph, options.seqLength);
+            return io::output::writeSeqCsv(filePath, graph, options.seqLength);
         };
 
         if (options.seqLength > 0) {
-            io::utils::logMessage("Writing sequences to CSV.");
-            writeGraph("sequences", "csv", generateFilePath, writeSeqCsvWithLength, graph);
+            if (io::output::writeGraph("sequences", "csv", generateFilePath, writeSeqCsvWithLength, graph)) {
+                io::utils::logMessage("Writing sequences to CSV.");
+            }
         }
 
         if (options.maxEig) {
