@@ -1,160 +1,140 @@
-#include <CLI/CLI.hpp>
 #include <iostream>
-#include <map>      // std::map
-#include <memory>   // std::unique_ptr
-#include <numeric>  // std::transform_reduce
+#include <memory>  // std::unique_ptr
 #include <string>
 
-#include "algorithm/Beal.hpp"
-#include "algorithm/DeBruijn.hpp"
+#include "algorithm/GeneratorFactory.hpp"
 #include "algorithm/Moore.hpp"
 #include "analysis/eigenvalues.hpp"
+#include "cli/Parser.hpp"
 #include "core/Graph.hpp"
-#include "core/Node.hpp"
-#include "core/constants.hpp"
 #include "io/Config.hpp"
 #include "io/Input.hpp"
 #include "io/Output.hpp"
 #include "io/utils.hpp"
 #include "path/Generator.hpp"
 #include "path/utils.hpp"
-#include "utils/CombinationUtils.hpp"
 #include "utils/GraphUtils.hpp"
 
-using Config = io::type::Config;
-using json = nlohmann::json;
+void handleInputJson(const CLI::Parser::ParsedOptions& options) {
+    io::utils::logMessage("Processing JSON: " + options.inputPath);
+
+    io::type::Config config;
+    if (!io::input::readConfigJson(options.inputPath, config)) {
+        io::utils::printErrorAndExit("Failed to load config: " + options.inputPath);
+    }
+
+    std::unique_ptr<GraphGenerator> generator = GeneratorFactory::create(config);
+
+    auto forbiddenNodesList = io::input::genNodesFromConfig(config);
+    for (const auto& forbiddenNodes : forbiddenNodesList) {
+        Graph graph = generator->generate(forbiddenNodes);
+
+        if (config.generation.opt_mode == "sink_less") {
+            io::utils::logMessage("Applying sink-less mode.");
+            graph = cleanGraph(graph);
+        } else if (config.generation.opt_mode == "minimize") {
+            io::utils::logMessage("Applying minimize mode.");
+            graph = cleanGraph(graph);
+            graph = Moore::apply(graph);
+        }
+
+        path::Generator pathGenerator(config, forbiddenNodes);
+
+        auto generateFilePath = [&](const std::string& type, const std::string& ext) {
+            return pathGenerator.genFilePath(type, ext);
+        };
+
+        if (config.output.edge_list) {
+            if (io::output::writeGraph("edges", "csv", generateFilePath, io::output::writeEdgesCsv,
+                                       graph)) {
+                io::utils::logMessage("Saved edge list to CSV.");
+            }
+        }
+
+        if (config.output.png_file) {
+            if (io::output::writeGraph("graph", "png", generateFilePath, io::output::writePng,
+                                       graph)) {
+                io::utils::logMessage("Saved graph to PNG.");
+            }
+        }
+    }
+}
+
+void handleInputCSV(const CLI::Parser::ParsedOptions& options, const std::string& extension) {
+    io::utils::logMessage("Processing CSV: " + options.inputPath);
+
+    std::vector<std::string> csvFiles = (extension == ".csv")
+                                            ? std::vector<std::string>{options.inputPath}
+                                            : path::utils::getFiles(options.inputPath, ".csv");
+
+    if (csvFiles.empty()) {
+        io::utils::printErrorAndExit("No CSV files found: " + options.inputPath);
+    }
+
+    for (const auto& csvFile : csvFiles) {
+        Graph graph;
+        bool success = (options.format == "edges") ? io::input::readEdgesCSV(csvFile, graph)
+                                                   : io::input::readMatrixCSV(csvFile, graph);
+        if (!success) {
+            io::utils::logMessage("Failed to read CSV: " + csvFile);
+            continue;
+        }
+
+        io::utils::logMessage("Reading CSV: " + csvFile);
+
+        std::string directory = path::utils::extractPath(csvFile, 2, true, false, false);
+        std::string fileName = path::utils::extractPath(csvFile, 0, false, true, false);
+
+        auto generateFilePath = [&](const std::string& type, const std::string& ext) {
+            return directory + "/" + type + "/" + fileName + "." + ext;
+        };
+
+        if (options.format != "matrix" && options.isMatrix &&
+            io::output::writeGraph("matrix", "csv", generateFilePath, io::output::writeMatrixCsv,
+                                   graph)) {
+            io::utils::logMessage("Saved matrix to CSV.");
+        }
+
+        if (options.pdf &&
+            io::output::writeGraph("graph", "pdf", generateFilePath, io::output::writePdf, graph)) {
+            io::utils::logMessage("Saved graph to PDF.");
+        }
+
+        auto writeSeqCsvWithLength = [&](const std::string& filePath, const Graph& graph) {
+            io::output::writeSeqCsv(filePath, graph, options.seqLength);
+        };
+
+        if (options.seqLength > 0 &&
+            io::output::writeGraph("sequences_length_" + std::to_string(options.seqLength), "csv",
+                                   generateFilePath, writeSeqCsvWithLength, graph)) {
+            io::utils::logMessage("Saved sequences of length " + std::to_string(options.seqLength) +
+                                  " to CSV.");
+        }
+
+        if (options.maxEig) {
+            double maxEig = calculateMaxEigenvalue(graph);
+            io::utils::logMessage(fileName + ": Max Eigenvalue = " + std::to_string(maxEig));
+        }
+    }
+}
 
 int main(int argc, char* argv[]) {
-    CLI::App app{"PFT-tools"};
+    CLI::Parser cliParser;
+    auto options = cliParser.parse(argc, argv);
 
-    std::string inputPath;
-    std::string format;
-    bool isMatrix = false;
-    bool pdf = false;
-    bool maxEig = false;
-    unsigned int seqLength = 0;
-
-    app.add_option("--input", inputPath, "Input file or directory path (JSON or CSV)")->required();
-    app.add_option("--format", format, "Input format: edges or matrix");
-    app.add_flag("--matrix", isMatrix, "Generate adjacency matrix CSV files");
-    app.add_flag("--pdf", pdf, "Generate PDF files");
-    app.add_flag("--max-eig", maxEig, "Calculate max eigenvalue");
-    app.add_option("--sequences", seqLength, "Calculate length of edge label sequences");
-
-    CLI11_PARSE(app, argc, argv);
-
-    auto extension = path::utils::extractPath(inputPath, 0, false, false, true);
+    auto extension = path::utils::extractPath(options.inputPath, 0, false, false, true);
 
     try {
         if (extension == ".json") {
-            io::type::Config config;
-            if (!io::input::readConfigJson(inputPath, config)) {
-                io::utils::printErrorAndExit("Failed to load config.");
-            }
-
-            auto forbiddenNodes = io::input::genNodesFromConfig(config);
-
-            static const std::map<std::string,
-                                  std::function<std::unique_ptr<GraphGenerator>(const Config&)>>
-                generatorMap = {{"Beal",
-                                 [](const Config& config) {
-                                     return std::make_unique<Beal>(config.generation.alphabet,
-                                                                   config.generation.period);
-                                 }},
-                                {"DeBruijn", [](const Config& config) {
-                                     return std::make_unique<DeBruijn>(
-                                         config.generation.alphabet, config.generation.period,
-                                         config.generation.forbidden.length);
-                                 }}};
-
-            auto it = generatorMap.find(config.generation.algorithm);
-            if (it == generatorMap.end()) {
-                io::utils::printErrorAndExit("Unknown algorithm: " + config.generation.algorithm);
-            }
-
-            std::unique_ptr<GraphGenerator> generator = it->second(config);
-
-            for (const auto& forbiddenCombinations : forbiddenNodes) {
-                Graph graph = generator->generate(forbiddenCombinations);
-
-                if (config.generation.opt_mode == "sink_less") {
-                    graph = cleanGraph(graph);
-                } else if (config.generation.opt_mode == "minimize") {
-                    graph = cleanGraph(graph);
-                    graph = Moore::apply(graph);
-                }
-
-                path::Generator pathGenerator(config, forbiddenCombinations);
-
-                if (config.output.edge_list) {
-                    const std::string filePath = pathGenerator.genFilePath("edges", "csv");
-                    io::output::writeEdgesCsv(filePath, graph);
-                }
-                if (config.output.png_file) {
-                    const std::string filePath = pathGenerator.genFilePath("graph", "png");
-                    io::output::writePng(filePath, graph);
-                }
-            }
+            handleInputJson(options);
         } else if (extension == ".csv" || extension.empty()) {
-            if (format != "edges" && format != "matrix") {
-                io::utils::printErrorAndExit(
-                    "Invalid format specified. Use 'edges' or 'matrix'.");
-            } else if (!maxEig && seqLength == 0 && !isMatrix && !pdf) {
-                io::utils::printErrorAndExit(
-                    "For CSV input, either --max-eig or --sequences must be specified.");
-            }
-
-            std::vector<std::string> csvFiles;
-            if (extension == ".csv") {
-                csvFiles.push_back(inputPath);
-            } else {
-                csvFiles = path::utils::getFiles(inputPath, ".csv");
-            }
-
-            if (csvFiles.empty()) {
-                io::utils::printErrorAndExit("No CSV files found in the specified directory.");
-            }
-
-            for (const auto& csvFile : csvFiles) {
-                Graph graph;
-                if (format == "edges") {
-                    if (!io::input::readEdgesCSV(csvFile, graph)) {
-                        continue;
-                    }
-                } else if (format == "matrix") {
-                    if (!io::input::readMatrixCSV(csvFile, graph)) {
-                        continue;
-                    }
-                }
-
-                std::string directory = path::utils::extractPath(csvFile, 2, true, false, false);
-                std::string fileName = path::utils::extractPath(csvFile, 0, false, true, false);
-
-                if (format != "matrix" && isMatrix) {
-                    std::string filePath = directory + "/matrix/" + fileName + ".csv";
-                    io::output::writeMatrixCsv(filePath, graph);
-                }
-
-                if (pdf) {
-                    std::string pdfPath = directory + "/graph/" + fileName + ".pdf";
-                    io::output::writePdf(pdfPath, graph);
-                }
-
-                if (maxEig) {
-                    std::cout << fileName << ": Max Eigenvalue = " << calculateMaxEigenvalue(graph)
-                              << std::endl;
-                }
-
-                if (seqLength > 0) {
-                    std::string filePath = directory + "/sequences/" + fileName + ".csv";
-                    io::output::writeSeqCsv(filePath, graph, seqLength);
-                }
-            }
+            cliParser.validate();
+            handleInputCSV(options, extension);
         } else {
             io::utils::printErrorAndExit("Unsupported file extension: " + extension);
         }
     } catch (const std::exception& e) {
-        io::utils::printErrorAndExit(e.what());
+        io::utils::printErrorAndExit("Error: " + std::string(e.what()));
     }
 
     return 0;
