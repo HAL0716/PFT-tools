@@ -1,16 +1,26 @@
 {
-  "mode": "custom",
-  "algorithm": "Beal",
-  "sink_less": true,
-  "minimize": true,
-  "alphabet_size": 2,
-  "period": 3,
-  "forbidden_words": [
-    ["000", 0],
-    ["11", 1]
-  ],
+  "generation": {
+    "mode": "custom",
+    "algorithm": "Beal",
+    "opt_mode": "none",
+    "alphabet": 2,
+    "period": 3,
+    "forbidden": {
+      "nodes": [
+        {
+          "word": "000",
+          "phase": 0
+        },
+        {
+          "word": "11",
+          "phase": 1
+        }
+      ]
+    }
+  },
   "output": {
-    "formats": ["edges", "matrix"],
-    "directory": "results/"
+    "edge_list": true,
+    "png_file": true,
+    "output_dir": "results"
   }
 }
