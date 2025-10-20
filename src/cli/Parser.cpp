@@ -2,6 +2,8 @@
 
 #include <cstdlib>
 
+#include "io/utils.hpp"
+
 namespace CLI {
 
 Parser::Parser() {
@@ -21,6 +23,17 @@ Parser::ParsedOptions Parser::parse(int argc, char* argv[]) {
         std::exit(app.exit(e));
     }
     return options;
+}
+
+void Parser::validate() {
+    if (options.format != "edges" && options.format != "matrix") {
+        io::utils::printErrorAndExit("Invalid format specified. Use 'edges' or 'matrix'.");
+    }
+
+    if (!options.maxEig && options.seqLength == 0 && !options.isMatrix && !options.pdf) {
+        io::utils::printErrorAndExit(
+            "For CSV input, either --max-eig or --sequences must be specified.");
+    }
 }
 
 }  // namespace CLI

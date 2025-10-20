@@ -18,6 +18,7 @@ class Parser {
 
     Parser();
     ParsedOptions parse(int argc, char* argv[]);
+    void validate();
 
    private:
     CLI::App app{"PFT-tools"};
