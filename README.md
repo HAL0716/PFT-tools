@@ -61,19 +61,29 @@ pft-tools --config <エッジリスト>.csv --format edges --sequences <長さ>
 
 ```json
 {
-  "mode": "custom",
-  "algorithm": "Beal", // "DeBruijn" も可
-  "sink_less": true, // シンクレス化
-  "minimize": true, // Moore 最小化 ( sink_less が true のときのみ有効)
-  "alphabet_size": 2, // シンボル数
-  "period": 3, // 周期
-  "forbidden_words": [
-    ["000", 0],
-    ["11", 1]
-  ], // 禁止語リスト
+  "generation": {
+    "mode": "custom",
+    "algorithm": "Beal",     // "DeBruijn", "Beal"
+    "opt_mode": "none",      // "none"（通常）, "sink_less"（シンクレス）, "minimize"（最小化）
+    "alphabet": 2,           // シンボル数
+    "period": 3,             // 周期
+    "forbidden": {
+      "nodes": [             // 禁止語リスト
+        {
+          "word": "000",     // 禁止語
+          "pos": 0           // 位置
+        },
+        {
+          "word": "11",
+          "pos": 1
+        },
+      ]
+    }
+  },
   "output": {
-    "formats": ["edges", "matrix"], // 出力形式
-    "directory": "results/" // 出力ディレクトリ
+    "edge_list": true,       // エッジリスト形式で出力
+    "png_file": false,       // PNG 形式で出力
+    "output_dir": "results"  // 出力ディレクトリ
   }
 }
 ```
@@ -82,17 +92,20 @@ pft-tools --config <エッジリスト>.csv --format edges --sequences <長さ>
 
 ```json
 {
-  "mode": "all-patterns",
-  "algorithm": "DeBruijn",
-  "sink_less": true,
-  "minimize": true,
-  "alphabet_size": 3,
-  "period": 2,
-  "forbidden_word_length": 5, // 禁止語長
-  "forbidden_per_position": [1, 0], // 周期位置ごとの禁止語数
+  "generation": {
+    "mode": "all-patterns",
+    "algorithm": "DeBruijn",
+    "opt_mode": "minimize",
+    "alphabet": 3,
+    "forbidden": {
+      "length": 3,               // 禁止語長
+      "position": [1, 0]           // 周期位置ごとの禁止語数
+    }
+  },
   "output": {
-    "formats": ["edges", "matrix"],
-    "directory": "results/"
+    "edge_list": true,       // エッジリスト形式で出力
+    "png_file": false,       // PNG 形式で出力
+    "output_dir": "results"  // 出力ディレクトリ
   }
 }
 ```
