@@ -106,27 +106,28 @@ int main(int argc, char* argv[]) {
     unsigned int sequencesLength = 0;
 
     auto inputOpt =
-        app.add_option("--input", inputPath, "Input file or directory path (JSON or CSV)");
+        app.add_option("--input", inputPath, "Input file or directory path (JSON or CSV)")
+            ->required();
+    auto extension = path::utils::extractPath(inputPath, 0, false, false, true);
 
     app.add_option("--format", format, "Input format: edges, matrix, or directory");
-    app.add_flag("--max-eig", maxEigenvalue, "Calculate the maximum eigenvalue");
-    app.add_option("--sequences", sequencesLength, "Length of edge label sequences to retrieve");
+    auto maxEigOpt = app.add_flag("--max-eig", maxEigenvalue, "Calculate the maximum eigenvalue");
+    auto sequencesOpt = app.add_option("--sequences", sequencesLength,
+                                       "Length of edge label sequences to retrieve");
 
     CLI11_PARSE(app, argc, argv);
 
     try {
-        if (inputPath.empty()) {
-            io::utils::printErrorAndExit("The --input option must be specified.");
-        }
-
-        auto extension = path::utils::extractPath(inputPath, 0, false, false, true);
-
         if (extension == ".json") {
             generateGraphFromJson(inputPath);
         } else if (extension == ".csv" || extension.empty()) {
+            // エラーチェック
             if (format != "edges" && format != "matrix") {
                 io::utils::printErrorAndExit(
                     "Invalid format specified. Use 'edges', 'matrix', or 'directory'.");
+            } else if (!maxEigenvalue && sequencesLength == 0) {
+                io::utils::printErrorAndExit(
+                    "For CSV input, either --max-eig or --sequences must be specified.");
             }
 
             std::vector<std::string> csvFiles;
