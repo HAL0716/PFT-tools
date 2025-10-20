@@ -140,7 +140,7 @@ void from_json(const json& j, GenericConfig& g) {
         }
     }
 
-    g.period = j.contains("period") ? j.at("period").get<unsigned int>() : g.forbidden.nodes.size();
+    g.period = j.contains("period") ? j.at("period").get<unsigned int>() : g.forbidden.position.size();
 }
 
 void from_json(const json& j, Config& c) {
