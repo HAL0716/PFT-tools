@@ -29,25 +29,21 @@ int main(int argc, char* argv[]) {
 
     std::string inputPath;
     std::string format;
-    bool matrix = false;
+    bool isMatrix = false;
     bool pdf = false;
-    bool maxEigenvalue = false;
-    unsigned int sequencesLength = 0;
+    bool maxEig = false;
+    unsigned int seqLength = 0;
 
-    auto inputOpt =
-        app.add_option("--input", inputPath, "Input file or directory path (JSON or CSV)")
-            ->required();
-    auto extension = path::utils::extractPath(inputPath, 0, false, false, true);
-
+    app.add_option("--input", inputPath, "Input file or directory path (JSON or CSV)")->required();
     app.add_option("--format", format, "Input format: edges, matrix, or directory");
-    auto matrixOpt = app.add_flag("--matrix", matrix,
-                                  "Indicates that the input CSV files are adjacency matrices");
-    auto pdfOpt = app.add_flag("--pdf", pdf, "Generate PDF files from PNG images");
-    auto maxEigOpt = app.add_flag("--max-eig", maxEigenvalue, "Calculate the maximum eigenvalue");
-    auto sequencesOpt = app.add_option("--sequences", sequencesLength,
-                                       "Length of edge label sequences to retrieve");
+    app.add_flag("--matrix", isMatrix, "Input CSV files are adjacency matrices");
+    app.add_flag("--pdf", pdf, "Generate PDF files");
+    app.add_flag("--max-eig", maxEig, "Calculate max eigenvalue");
+    app.add_option("--sequences", seqLength, "Length of edge label sequences");
 
     CLI11_PARSE(app, argc, argv);
+
+    auto extension = path::utils::extractPath(inputPath, 0, false, false, true);
 
     try {
         if (extension == ".json") {
@@ -60,16 +56,16 @@ int main(int argc, char* argv[]) {
 
             static const std::map<std::string,
                                   std::function<std::unique_ptr<GraphGenerator>(const Config&)>>
-                generatorMap = {
-                    {"Beal",
-                     [](const Config& config) {
-                         return std::make_unique<Beal>(config.generation.alphabet, config.generation.period);
-                     }},
-                    {"DeBruijn", [](const Config& config) {
-                         return std::make_unique<DeBruijn>(config.generation.alphabet,
-                                                           config.generation.period,
-                                                           config.generation.forbidden.length);
-                     }}};
+                generatorMap = {{"Beal",
+                                 [](const Config& config) {
+                                     return std::make_unique<Beal>(config.generation.alphabet,
+                                                                   config.generation.period);
+                                 }},
+                                {"DeBruijn", [](const Config& config) {
+                                     return std::make_unique<DeBruijn>(
+                                         config.generation.alphabet, config.generation.period,
+                                         config.generation.forbidden.length);
+                                 }}};
 
             auto it = generatorMap.find(config.generation.algorithm);
             if (it == generatorMap.end()) {
@@ -102,8 +98,8 @@ int main(int argc, char* argv[]) {
         } else if (extension == ".csv" || extension.empty()) {
             if (format != "edges" && format != "matrix") {
                 io::utils::printErrorAndExit(
-                    "Invalid format specified. Use 'edges', 'matrix', or 'directory'.");
-            } else if (!maxEigenvalue && sequencesLength == 0 && !matrix && !pdf) {
+                    "Invalid format specified. Use 'edges' or 'matrix'.");
+            } else if (!maxEig && seqLength == 0 && !isMatrix && !pdf) {
                 io::utils::printErrorAndExit(
                     "For CSV input, either --max-eig or --sequences must be specified.");
             }
@@ -134,23 +130,24 @@ int main(int argc, char* argv[]) {
                 std::string directory = path::utils::extractPath(csvFile, 2, true, false, false);
                 std::string fileName = path::utils::extractPath(csvFile, 0, false, true, false);
 
-                if (matrix) {
+                if (isMatrix) {
                     std::string filePath = directory + "/matrix/" + fileName + ".csv";
                     io::output::writeMatrixCsv(filePath, graph);
-                }
-
-                if (sequencesLength > 0) {
-                    std::string filePath = directory + "/sequences/" + fileName + ".csv";
-                    io::output::writeSeqCsv(filePath, graph, sequencesLength);
-                }
-
-                if (maxEigenvalue) {
-                    std::cout << "Max Eigenvalue: " << calculateMaxEigenvalue(graph) << std::endl;
                 }
 
                 if (pdf) {
                     std::string pdfPath = directory + "/graph/" + fileName + ".pdf";
                     io::output::writePdf(pdfPath, graph);
+                }
+
+                if (maxEig) {
+                    std::cout << fileName << ": Max Eigenvalue = " << calculateMaxEigenvalue(graph)
+                              << std::endl;
+                }
+
+                if (seqLength > 0) {
+                    std::string filePath = directory + "/sequences/" + fileName + ".csv";
+                    io::output::writeSeqCsv(filePath, graph, seqLength);
                 }
             }
         } else {
