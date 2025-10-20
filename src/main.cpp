@@ -82,12 +82,9 @@ int main(int argc, char* argv[]) {
         } else if (extension == ".csv" || extension.empty()) {
             cliParser.validate();
 
-            std::vector<std::string> csvFiles;
-            if (extension == ".csv") {
-                csvFiles.push_back(options.inputPath);
-            } else {
-                csvFiles = path::utils::getFiles(options.inputPath, ".csv");
-            }
+            std::vector<std::string> csvFiles =
+                (extension == ".csv") ? std::vector<std::string>{options.inputPath}
+                                      : path::utils::getFiles(options.inputPath, ".csv");
 
             if (csvFiles.empty()) {
                 io::utils::printErrorAndExit("No CSV files found in the specified directory.");
@@ -95,14 +92,11 @@ int main(int argc, char* argv[]) {
 
             for (const auto& csvFile : csvFiles) {
                 Graph graph;
-                if (options.format == "edges") {
-                    if (!io::input::readEdgesCSV(csvFile, graph)) {
-                        continue;
-                    }
-                } else if (options.format == "matrix") {
-                    if (!io::input::readMatrixCSV(csvFile, graph)) {
-                        continue;
-                    }
+                bool success = (options.format == "edges")
+                                   ? io::input::readEdgesCSV(csvFile, graph)
+                                   : io::input::readMatrixCSV(csvFile, graph);
+                if (!success) {
+                    continue;
                 }
 
                 std::string directory = path::utils::extractPath(csvFile, 2, true, false, false);
