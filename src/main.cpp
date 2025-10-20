@@ -16,11 +16,11 @@
 #include "utils/GraphUtils.hpp"
 
 void handleInputJson(const CLI::Parser::ParsedOptions& options) {
-    io::utils::logMessage("Processing JSON input: " + options.inputPath);
+    io::utils::logMessage("Processing JSON: " + options.inputPath);
 
     io::type::Config config;
     if (!io::input::readConfigJson(options.inputPath, config)) {
-        io::utils::printErrorAndExit("[ERROR] Failed to load config from: " + options.inputPath);
+        io::utils::printErrorAndExit("Failed to load config: " + options.inputPath);
     }
 
     std::unique_ptr<GraphGenerator> generator = GeneratorFactory::create(config);
@@ -30,10 +30,10 @@ void handleInputJson(const CLI::Parser::ParsedOptions& options) {
         Graph graph = generator->generate(forbiddenNodes);
 
         if (config.generation.opt_mode == "sink_less") {
-            io::utils::logMessage("Applying sink-less optimization.");
+            io::utils::logMessage("Applying sink-less mode.");
             graph = cleanGraph(graph);
         } else if (config.generation.opt_mode == "minimize") {
-            io::utils::logMessage("Applying minimize optimization.");
+            io::utils::logMessage("Applying minimize mode.");
             graph = cleanGraph(graph);
             graph = Moore::apply(graph);
         }
@@ -45,41 +45,42 @@ void handleInputJson(const CLI::Parser::ParsedOptions& options) {
         };
 
         if (config.output.edge_list) {
-            if (io::output::writeGraph("edges", "csv", generateFilePath, io::output::writeEdgesCsv, graph)) {
-                io::utils::logMessage("Writing edge list to CSV.");
+            if (io::output::writeGraph("edges", "csv", generateFilePath, io::output::writeEdgesCsv,
+                                       graph)) {
+                io::utils::logMessage("Saved edge list to CSV.");
             }
         }
 
         if (config.output.png_file) {
-            if (io::output::writeGraph("graph", "png", generateFilePath, io::output::writePng, graph)) {
-                io::utils::logMessage("Writing graph to PNG.");
+            if (io::output::writeGraph("graph", "png", generateFilePath, io::output::writePng,
+                                       graph)) {
+                io::utils::logMessage("Saved graph to PNG.");
             }
         }
     }
 }
 
 void handleInputCSV(const CLI::Parser::ParsedOptions& options, const std::string& extension) {
-    io::utils::logMessage("Processing CSV input: " + options.inputPath);
+    io::utils::logMessage("Processing CSV: " + options.inputPath);
 
     std::vector<std::string> csvFiles = (extension == ".csv")
                                             ? std::vector<std::string>{options.inputPath}
                                             : path::utils::getFiles(options.inputPath, ".csv");
 
     if (csvFiles.empty()) {
-        io::utils::printErrorAndExit("[ERROR] No CSV files found in the specified directory: " +
-                                     options.inputPath);
+        io::utils::printErrorAndExit("No CSV files found: " + options.inputPath);
     }
 
     for (const auto& csvFile : csvFiles) {
-        io::utils::logMessage("Reading CSV file: " + csvFile);
-
         Graph graph;
         bool success = (options.format == "edges") ? io::input::readEdgesCSV(csvFile, graph)
                                                    : io::input::readMatrixCSV(csvFile, graph);
         if (!success) {
-            io::utils::logMessage("[WARNING] Failed to read CSV file: " + csvFile);
+            io::utils::logMessage("Failed to read CSV: " + csvFile);
             continue;
         }
+
+        io::utils::logMessage("Reading CSV: " + csvFile);
 
         std::string directory = path::utils::extractPath(csvFile, 2, true, false, false);
         std::string fileName = path::utils::extractPath(csvFile, 0, false, true, false);
@@ -88,24 +89,26 @@ void handleInputCSV(const CLI::Parser::ParsedOptions& options, const std::string
             return directory + "/" + type + "/" + fileName + "." + ext;
         };
 
-        if (options.format != "matrix" && options.isMatrix) {
-            io::utils::logMessage("Writing adjacency matrix to CSV.");
-            io::output::writeGraph("matrix", "csv", generateFilePath, io::output::writeMatrixCsv, graph);
+        if (options.format != "matrix" && options.isMatrix &&
+            io::output::writeGraph("matrix", "csv", generateFilePath, io::output::writeMatrixCsv,
+                                   graph)) {
+            io::utils::logMessage("Saved matrix to CSV.");
         }
 
-        if (options.pdf) {
-            io::utils::logMessage("Writing graph to PDF.");
-            io::output::writeGraph("graph", "pdf", generateFilePath, io::output::writePdf, graph);
+        if (options.pdf &&
+            io::output::writeGraph("graph", "pdf", generateFilePath, io::output::writePdf, graph)) {
+            io::utils::logMessage("Saved graph to PDF.");
         }
 
         auto writeSeqCsvWithLength = [&](const std::string& filePath, const Graph& graph) {
-            return io::output::writeSeqCsv(filePath, graph, options.seqLength);
+            io::output::writeSeqCsv(filePath, graph, options.seqLength);
         };
 
-        if (options.seqLength > 0) {
-            if (io::output::writeGraph("sequences", "csv", generateFilePath, writeSeqCsvWithLength, graph)) {
-                io::utils::logMessage("Writing sequences to CSV.");
-            }
+        if (options.seqLength > 0 &&
+            io::output::writeGraph("sequences_length_" + std::to_string(options.seqLength), "csv",
+                                   generateFilePath, writeSeqCsvWithLength, graph)) {
+            io::utils::logMessage("Saved sequences of length " + std::to_string(options.seqLength) +
+                                  " to CSV.");
         }
 
         if (options.maxEig) {
@@ -128,10 +131,10 @@ int main(int argc, char* argv[]) {
             cliParser.validate();
             handleInputCSV(options, extension);
         } else {
-            io::utils::printErrorAndExit("[ERROR] Unsupported file extension: " + extension);
+            io::utils::printErrorAndExit("Unsupported file extension: " + extension);
         }
     } catch (const std::exception& e) {
-        io::utils::printErrorAndExit("[ERROR] " + std::string(e.what()));
+        io::utils::printErrorAndExit("Error: " + std::string(e.what()));
     }
 
     return 0;
