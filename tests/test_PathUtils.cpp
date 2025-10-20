@@ -19,4 +19,10 @@ TEST(PathUtilsTest, extractPath) {
     // フルパス取得(拡張子あり・なし)
     EXPECT_EQ(path::utils::extractPath(filePath, 0, true, true, true), "/home/user/data/file.csv");
     EXPECT_EQ(path::utils::extractPath(filePath, 0, true, true, false), "/home/user/data/file");
+
+    // 拡張子だけを取得
+    EXPECT_EQ(path::utils::extractPath(filePath, 0, false, false, true), ".csv");
+
+    // 何も取得しない場合
+    EXPECT_EQ(path::utils::extractPath(filePath, 0, false, false, false), "");
 }

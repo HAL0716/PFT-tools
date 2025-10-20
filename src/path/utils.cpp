@@ -70,10 +70,14 @@ std::string extractPath(const std::string& filePath, int depth, bool includeDir,
     }
 
     if (includeFile) {
-        result /= includeExt ? path.filename() : path.stem();
+        result /= path.stem();
     }
 
-    return includeDir || includeFile ? result.string() : "";
+    if (includeExt) {
+        result += path.extension();
+    }
+
+    return result.string();
 }
 
 }  // namespace path::utils
