@@ -37,8 +37,6 @@ int main(int argc, char* argv[]) {
                 io::utils::printErrorAndExit("Failed to load config.");
             }
 
-            auto forbiddenNodes = io::input::genNodesFromConfig(config);
-
             static const std::map<std::string,
                                   std::function<std::unique_ptr<GraphGenerator>(const Config&)>>
                 generatorMap = {{"Beal",
@@ -59,8 +57,9 @@ int main(int argc, char* argv[]) {
 
             std::unique_ptr<GraphGenerator> generator = it->second(config);
 
-            for (const auto& forbiddenCombinations : forbiddenNodes) {
-                Graph graph = generator->generate(forbiddenCombinations);
+            auto forbiddenNodesList = io::input::genNodesFromConfig(config);
+            for (const auto& forbiddenNodes : forbiddenNodesList) {
+                Graph graph = generator->generate(forbiddenNodes);
 
                 if (config.generation.opt_mode == "sink_less") {
                     graph = cleanGraph(graph);
@@ -69,7 +68,7 @@ int main(int argc, char* argv[]) {
                     graph = Moore::apply(graph);
                 }
 
-                path::Generator pathGenerator(config, forbiddenCombinations);
+                path::Generator pathGenerator(config, forbiddenNodes);
 
                 if (config.output.edge_list) {
                     const std::string filePath = pathGenerator.genFilePath("edges", "csv");
