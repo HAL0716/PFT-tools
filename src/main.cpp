@@ -24,79 +24,6 @@
 using Config = io::type::Config;
 using json = nlohmann::json;
 
-// GraphGeneratorを生成する関数マップ
-static const std::map<std::string, std::function<std::unique_ptr<GraphGenerator>(const Config&)>>
-    generatorMap = {{"Beal",
-                     [](const Config& config) {
-                         return std::make_unique<Beal>(config.alphabet_size, config.period,
-                                                       config.forbidden_word_length.value_or(0));
-                     }},
-                    {"DeBruijn", [](const Config& config) {
-                         return std::make_unique<DeBruijn>(config.alphabet_size, config.period,
-                                                           config.forbidden_word_length.value());
-                     }}};
-
-// 動的にGraphGeneratorの派生クラスを生成するファクトリ関数
-std::unique_ptr<GraphGenerator> createGraphGenerator(const Config& config) {
-    auto it = generatorMap.find(config.algorithm);
-
-    if (it != generatorMap.end()) {
-        return it->second(config);
-    } else {
-        throw std::invalid_argument("Unknown algorithm: " + config.algorithm);
-    }
-}
-
-// JSON設定からグラフを生成する関数
-void generateGraphFromJson(const std::string& configPath) {
-    io::type::Config config;
-    if (!io::input::readConfigJson(configPath, config)) {
-        io::utils::printErrorAndExit("Failed to load config.");
-    }
-
-    auto forbiddenNodes = io::input::genNodesFromConfig(config);
-
-    std::unique_ptr<GraphGenerator> generator = createGraphGenerator(config);
-
-    try {
-        for (const auto& forbiddenCombinations : forbiddenNodes) {
-            Graph graph = generator->generate(forbiddenCombinations);
-
-            if (config.sink_less) {
-                graph = cleanGraph(graph);
-                if (config.minimize) {
-                    graph = Moore::apply(graph);
-                }
-            }
-
-            for (const auto& format : config.output.formats) {
-                path::Generator pathGenerator(config, forbiddenCombinations);
-
-                if (format == "edges") {
-                    const std::string filePath = pathGenerator.genFilePath("edges", "csv");
-                    io::output::writeEdgesCsv(filePath, graph);
-                } else if (format == "matrix") {
-                    const std::string filePath = pathGenerator.genFilePath("matrix", "csv");
-                    io::output::writeMatrixCsv(filePath, graph);
-                } else if (format == "dot") {
-                    const std::string filePath = pathGenerator.genFilePath("dot", "dot");
-                    io::output::writeDot(filePath, graph);
-                } else if (format == "pdf") {
-                    const std::string filePath = pathGenerator.genFilePath("pdf", "pdf");
-                    io::output::writePdf(filePath, graph);
-                } else if (format == "png") {
-                    const std::string filePath = pathGenerator.genFilePath("png", "png");
-                    io::output::writePng(filePath, graph);
-                } else {
-                    io::utils::printErrorAndExit("Unknown output format: " + format);
-                }
-            }
-        }
-    } catch (const std::exception& e) {
-        io::utils::printErrorAndExit(e.what());
-    }
-}
-
 int main(int argc, char* argv[]) {
     CLI::App app{"PFT-tools"};
 
@@ -119,9 +46,71 @@ int main(int argc, char* argv[]) {
 
     try {
         if (extension == ".json") {
-            generateGraphFromJson(inputPath);
+            io::type::Config config;
+            if (!io::input::readConfigJson(inputPath, config)) {
+                io::utils::printErrorAndExit("Failed to load config.");
+            }
+
+            auto forbiddenNodes = io::input::genNodesFromConfig(config);
+
+            static const std::map<std::string,
+                                  std::function<std::unique_ptr<GraphGenerator>(const Config&)>>
+                generatorMap = {
+                    {"Beal",
+                     [](const Config& config) {
+                         return std::make_unique<Beal>(config.alphabet_size, config.period,
+                                                       config.forbidden_word_length.value_or(0));
+                     }},
+                    {"DeBruijn", [](const Config& config) {
+                         return std::make_unique<DeBruijn>(config.alphabet_size, config.period,
+                                                           config.forbidden_word_length.value());
+                     }}};
+
+            auto it = generatorMap.find(config.algorithm);
+            if (it == generatorMap.end()) {
+                io::utils::printErrorAndExit("Unknown algorithm: " + config.algorithm);
+            }
+
+            std::unique_ptr<GraphGenerator> generator = it->second(config);
+
+            try {
+                for (const auto& forbiddenCombinations : forbiddenNodes) {
+                    Graph graph = generator->generate(forbiddenCombinations);
+
+                    if (config.sink_less) {
+                        graph = cleanGraph(graph);
+                        if (config.minimize) {
+                            graph = Moore::apply(graph);
+                        }
+                    }
+
+                    for (const auto& format : config.output.formats) {
+                        path::Generator pathGenerator(config, forbiddenCombinations);
+
+                        if (format == "edges") {
+                            const std::string filePath = pathGenerator.genFilePath("edges", "csv");
+                            io::output::writeEdgesCsv(filePath, graph);
+                        } else if (format == "matrix") {
+                            const std::string filePath = pathGenerator.genFilePath("matrix", "csv");
+                            io::output::writeMatrixCsv(filePath, graph);
+                        } else if (format == "dot") {
+                            const std::string filePath = pathGenerator.genFilePath("dot", "dot");
+                            io::output::writeDot(filePath, graph);
+                        } else if (format == "pdf") {
+                            const std::string filePath = pathGenerator.genFilePath("pdf", "pdf");
+                            io::output::writePdf(filePath, graph);
+                        } else if (format == "png") {
+                            const std::string filePath = pathGenerator.genFilePath("png", "png");
+                            io::output::writePng(filePath, graph);
+                        } else {
+                            io::utils::printErrorAndExit("Unknown output format: " + format);
+                        }
+                    }
+                }
+            } catch (const std::exception& e) {
+                io::utils::printErrorAndExit(e.what());
+            }
         } else if (extension == ".csv" || extension.empty()) {
-            // エラーチェック
             if (format != "edges" && format != "matrix") {
                 io::utils::printErrorAndExit(
                     "Invalid format specified. Use 'edges', 'matrix', or 'directory'.");
