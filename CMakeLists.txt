@@ -102,6 +102,7 @@ foreach(TEST_SOURCE ${TEST_SOURCES})
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${eigen_SOURCE_DIR}
     ${spectra_SOURCE_DIR}/include
+    ${cli11_proj_SOURCE_DIR}/include
   )
   target_link_libraries(${TEST_NAME} PRIVATE ${TEST_LIBRARIES})
   add_test(NAME ${TEST_NAME} COMMAND ${TEST_NAME})
