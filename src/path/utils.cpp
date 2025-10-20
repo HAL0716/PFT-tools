@@ -66,7 +66,8 @@ std::string extractPath(const std::string& filePath, int depth, bool includeDir,
         throw std::invalid_argument("Depth must be non-negative");
     }
     if (includeDir && !includeFile && includeExt) {
-        throw std::invalid_argument("Cannot extract only extension without any path context");
+        throw std::invalid_argument(
+            "Cannot include both directory path and extension without including the file name");
     }
 
     std::filesystem::path path(filePath);
