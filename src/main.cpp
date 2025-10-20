@@ -1,4 +1,3 @@
-#include <CLI/CLI.hpp>
 #include <iostream>
 #include <map>      // std::map
 #include <memory>   // std::unique_ptr
@@ -9,6 +8,7 @@
 #include "algorithm/DeBruijn.hpp"
 #include "algorithm/Moore.hpp"
 #include "analysis/eigenvalues.hpp"
+#include "cli/Parser.hpp"
 #include "core/Graph.hpp"
 #include "core/Node.hpp"
 #include "core/constants.hpp"
@@ -25,30 +25,15 @@ using Config = io::type::Config;
 using json = nlohmann::json;
 
 int main(int argc, char* argv[]) {
-    CLI::App app{"PFT-tools"};
+    CLI::Parser cliParser;
+    auto options = cliParser.parse(argc, argv);
 
-    std::string inputPath;
-    std::string format;
-    bool isMatrix = false;
-    bool pdf = false;
-    bool maxEig = false;
-    unsigned int seqLength = 0;
-
-    app.add_option("--input", inputPath, "Input file or directory path (JSON or CSV)")->required();
-    app.add_option("--format", format, "Input format: edges or matrix");
-    app.add_flag("--matrix", isMatrix, "Generate adjacency matrix CSV files");
-    app.add_flag("--pdf", pdf, "Generate PDF files");
-    app.add_flag("--max-eig", maxEig, "Calculate max eigenvalue");
-    app.add_option("--sequences", seqLength, "Calculate length of edge label sequences");
-
-    CLI11_PARSE(app, argc, argv);
-
-    auto extension = path::utils::extractPath(inputPath, 0, false, false, true);
+    auto extension = path::utils::extractPath(options.inputPath, 0, false, false, true);
 
     try {
         if (extension == ".json") {
             io::type::Config config;
-            if (!io::input::readConfigJson(inputPath, config)) {
+            if (!io::input::readConfigJson(options.inputPath, config)) {
                 io::utils::printErrorAndExit("Failed to load config.");
             }
 
@@ -96,19 +81,19 @@ int main(int argc, char* argv[]) {
                 }
             }
         } else if (extension == ".csv" || extension.empty()) {
-            if (format != "edges" && format != "matrix") {
-                io::utils::printErrorAndExit(
-                    "Invalid format specified. Use 'edges' or 'matrix'.");
-            } else if (!maxEig && seqLength == 0 && !isMatrix && !pdf) {
+            if (options.format != "edges" && options.format != "matrix") {
+                io::utils::printErrorAndExit("Invalid format specified. Use 'edges' or 'matrix'.");
+            } else if (!options.maxEig && options.seqLength == 0 && !options.isMatrix &&
+                       !options.pdf) {
                 io::utils::printErrorAndExit(
                     "For CSV input, either --max-eig or --sequences must be specified.");
             }
 
             std::vector<std::string> csvFiles;
             if (extension == ".csv") {
-                csvFiles.push_back(inputPath);
+                csvFiles.push_back(options.inputPath);
             } else {
-                csvFiles = path::utils::getFiles(inputPath, ".csv");
+                csvFiles = path::utils::getFiles(options.inputPath, ".csv");
             }
 
             if (csvFiles.empty()) {
@@ -117,11 +102,11 @@ int main(int argc, char* argv[]) {
 
             for (const auto& csvFile : csvFiles) {
                 Graph graph;
-                if (format == "edges") {
+                if (options.format == "edges") {
                     if (!io::input::readEdgesCSV(csvFile, graph)) {
                         continue;
                     }
-                } else if (format == "matrix") {
+                } else if (options.format == "matrix") {
                     if (!io::input::readMatrixCSV(csvFile, graph)) {
                         continue;
                     }
@@ -130,24 +115,24 @@ int main(int argc, char* argv[]) {
                 std::string directory = path::utils::extractPath(csvFile, 2, true, false, false);
                 std::string fileName = path::utils::extractPath(csvFile, 0, false, true, false);
 
-                if (format != "matrix" && isMatrix) {
+                if (options.format != "matrix" && options.isMatrix) {
                     std::string filePath = directory + "/matrix/" + fileName + ".csv";
                     io::output::writeMatrixCsv(filePath, graph);
                 }
 
-                if (pdf) {
+                if (options.pdf) {
                     std::string pdfPath = directory + "/graph/" + fileName + ".pdf";
                     io::output::writePdf(pdfPath, graph);
                 }
 
-                if (maxEig) {
+                if (options.maxEig) {
                     std::cout << fileName << ": Max Eigenvalue = " << calculateMaxEigenvalue(graph)
                               << std::endl;
                 }
 
-                if (seqLength > 0) {
+                if (options.seqLength > 0) {
                     std::string filePath = directory + "/sequences/" + fileName + ".csv";
-                    io::output::writeSeqCsv(filePath, graph, seqLength);
+                    io::output::writeSeqCsv(filePath, graph, options.seqLength);
                 }
             }
         } else {
