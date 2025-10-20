@@ -12,15 +12,15 @@ std::string getRoot() {
 
 std::string buildBaseDir(const Config& cfg, const std::string& root) {
     std::ostringstream path;
-    path << root << "/" << cfg.output.directory << "/";
+    path << root << "/" << cfg.output.output_dir << "/";
 
-    if (cfg.mode == "all-patterns") {
-        path << cfg.alphabet_size << "-" << cfg.period << "-"
-             << cfg.forbidden_word_length.value_or(0);
+    if (cfg.generation.mode == "all-patterns") {
+        path << cfg.generation.alphabet << "-" << cfg.generation.period << "-"
+             << cfg.generation.forbidden.length;
 
-        if (cfg.forbidden_per_position) {
+        if (!cfg.generation.forbidden.position.empty()) {
             path << ":";
-            const auto& counts = cfg.forbidden_per_position.value();
+            const auto& counts = cfg.generation.forbidden.position;
             for (size_t i = 0; i < counts.size(); ++i) {
                 if (i > 0)
                     path << "-";
@@ -28,7 +28,7 @@ std::string buildBaseDir(const Config& cfg, const std::string& root) {
             }
         }
     } else {
-        path << cfg.mode;
+        path << cfg.generation.mode;
     }
 
     return path.str();

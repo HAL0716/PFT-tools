@@ -63,8 +63,8 @@ bool readConfigJson(const std::string& filePath, Config& config) {
         config = jsonData.get<Config>();
         config.validate();
 
-        if (config.mode == "custom" && config.algorithm == "DeBruijn") {
-            config.formatForDeBruijn();
+        if (config.generation.mode == "custom" && config.generation.algorithm == "DeBruijn") {
+            config.generation.formatForDeBruijn();
         }
     } catch (const std::exception& e) {
         std::cerr << "Error: Invalid config: " << e.what() << std::endl;
@@ -133,19 +133,12 @@ bool readMatrixCSV(const std::string& filePath, Graph& graph) {
 
 std::vector<std::vector<std::vector<Node>>> genForbiddenList(const Config& config) {
     std::vector<std::vector<std::vector<Node>>> forbiddenNodesList;
-    const auto& words = combine(ALPHABET.substr(0, config.alphabet_size),
-                                config.forbidden_word_length.value(), true);
-    const auto& perPosition = config.forbidden_per_position.value();
-    if (perPosition.size() < config.period) {
-        io::utils::printErrorAndExit(
-            "forbidden_per_position.size() (" + std::to_string(perPosition.size()) +
-            ") is less than config.period (" + std::to_string(config.period) +
-            "). Check your configuration to avoid truncation.");
-    }
-    unsigned int period = config.period;
+    const auto& words = combine(ALPHABET.substr(0, config.generation.alphabet),
+                                config.generation.forbidden.length, true);
+    const auto& position = config.generation.forbidden.position;
 
-    for (unsigned int p = 0; p < period; ++p) {
-        unsigned int n = perPosition[p];
+    for (unsigned int p = 0; p < position.size(); ++p) {
+        unsigned int n = position[p];
         if (n > words.size()) {
             io::utils::printErrorAndExit(
                 "forbidden_per_position value exceeds total combinations.");
@@ -188,20 +181,20 @@ std::vector<std::vector<Node>> combineNodes(
 }
 
 std::vector<std::vector<Node>> genNodesFromConfig(const Config& config) {
-    if (config.mode == "custom") {
+    if (config.generation.mode == "custom") {
         std::vector<Node> forbiddenNodes;
-        for (const auto& forbidden : config.forbidden_words.value()) {
-            forbiddenNodes.emplace_back(forbidden.label, forbidden.phase);
+        for (const auto& nodes : config.generation.forbidden.nodes) {
+            forbiddenNodes.emplace_back(nodes.label, nodes.phase);
         }
         if (forbiddenNodes.empty()) {
             io::utils::printErrorAndExit("forbidden_words is empty.");
         }
         return {std::move(forbiddenNodes)};
-    } else if (config.mode == "all-patterns") {
+    } else if (config.generation.mode == "all-patterns") {
         auto forbiddenNodesList = genForbiddenList(config);
         return combineNodes(forbiddenNodesList);
     } else {
-        io::utils::printErrorAndExit("Unknown mode '" + config.mode + "'.");
+        io::utils::printErrorAndExit("Unknown mode '" + config.generation.mode + "'.");
     }
     return {};
 }
