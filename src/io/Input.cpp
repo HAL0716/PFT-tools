@@ -157,10 +157,11 @@ std::vector<std::vector<std::vector<Node>>> genForbiddenList(const Config& confi
         }
 
         // 組み合わせを生成
-        forbiddenNodesList.emplace_back(n == 0 ? std::vector<std::vector<Node>>()
-                                        : n == words.size()
-                                            ? std::vector<std::vector<Node>>{forbiddenNodes}
-                                            : combine(forbiddenNodes, n, false));
+        if (n > 0) {
+            forbiddenNodesList.emplace_back(n == words.size()
+                                        ? std::vector<std::vector<Node>>{forbiddenNodes}
+                                        : combine(forbiddenNodes, n, false));
+        }
     }
 
     return forbiddenNodesList;
