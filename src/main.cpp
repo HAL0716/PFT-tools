@@ -24,151 +24,134 @@
 using Config = io::type::Config;
 using json = nlohmann::json;
 
-// GraphGeneratorを生成する関数マップ
-static const std::map<std::string, std::function<std::unique_ptr<GraphGenerator>(const Config&)>>
-    generatorMap = {{"Beal",
-                     [](const Config& config) {
-                         return std::make_unique<Beal>(config.alphabet_size, config.period,
-                                                       config.forbidden_word_length.value_or(0));
-                     }},
-                    {"DeBruijn", [](const Config& config) {
-                         return std::make_unique<DeBruijn>(config.alphabet_size, config.period,
-                                                           config.forbidden_word_length.value());
-                     }}};
-
-// 動的にGraphGeneratorの派生クラスを生成するファクトリ関数
-std::unique_ptr<GraphGenerator> createGraphGenerator(const Config& config) {
-    auto it = generatorMap.find(config.algorithm);
-
-    if (it != generatorMap.end()) {
-        return it->second(config);
-    } else {
-        throw std::invalid_argument("Unknown algorithm: " + config.algorithm);
-    }
-}
-
-// JSON設定からグラフを生成する関数
-void generateGraphFromJson(const std::string& configPath) {
-    io::type::Config config;
-    if (!io::input::readConfigJson(configPath, config)) {
-        io::utils::printErrorAndExit("Failed to load config.");
-    }
-
-    auto forbiddenNodes = io::input::genNodesFromConfig(config);
-
-    std::unique_ptr<GraphGenerator> generator = createGraphGenerator(config);
-
-    try {
-        for (const auto& forbiddenCombinations : forbiddenNodes) {
-            Graph graph = generator->generate(forbiddenCombinations);
-
-            if (config.sink_less) {
-                graph = cleanGraph(graph);
-                if (config.minimize) {
-                    graph = Moore::apply(graph);
-                }
-            }
-
-            for (const auto& format : config.output.formats) {
-                path::Generator pathGenerator(config, forbiddenCombinations);
-
-                if (format == "edges") {
-                    const std::string filePath = pathGenerator.genFilePath("edges", "csv");
-                    io::output::writeEdgesCsv(filePath, graph);
-                } else if (format == "matrix") {
-                    const std::string filePath = pathGenerator.genFilePath("matrix", "csv");
-                    io::output::writeMatrixCsv(filePath, graph);
-                } else if (format == "dot") {
-                    const std::string filePath = pathGenerator.genFilePath("dot", "dot");
-                    io::output::writeDot(filePath, graph);
-                } else if (format == "pdf") {
-                    const std::string filePath = pathGenerator.genFilePath("pdf", "pdf");
-                    io::output::writePdf(filePath, graph);
-                } else if (format == "png") {
-                    const std::string filePath = pathGenerator.genFilePath("png", "png");
-                    io::output::writePng(filePath, graph);
-                } else {
-                    io::utils::printErrorAndExit("Unknown output format: " + format);
-                }
-            }
-        }
-    } catch (const std::exception& e) {
-        io::utils::printErrorAndExit(e.what());
-    }
-}
-
-// ファイルパスから拡張子を取得する関数
-std::string getFileExtension(const std::string& filePath) {
-    size_t dotPos = filePath.rfind('.');
-    if (dotPos != std::string::npos) {
-        return filePath.substr(dotPos);
-    }
-    return "";
-}
-
 int main(int argc, char* argv[]) {
     CLI::App app{"PFT-tools"};
 
-    std::string configPath;
+    std::string inputPath;
     std::string format;
-    bool maxEigenvalue = false;
-    unsigned int sequencesLength = 0;
+    bool isMatrix = false;
+    bool pdf = false;
+    bool maxEig = false;
+    unsigned int seqLength = 0;
 
-    app.add_option("--config", configPath, "Path to the configuration file or directory")
-        ->required();
-    app.add_option("--format", format, "Input format: edges, matrix, or directory");
-    app.add_flag("--max-eig", maxEigenvalue, "Calculate the maximum eigenvalue");
-    app.add_option("--sequences", sequencesLength, "Length of edge label sequences to retrieve");
+    app.add_option("--input", inputPath, "Input file or directory path (JSON or CSV)")->required();
+    app.add_option("--format", format, "Input format: edges or matrix");
+    app.add_flag("--matrix", isMatrix, "Generate adjacency matrix CSV files");
+    app.add_flag("--pdf", pdf, "Generate PDF files");
+    app.add_flag("--max-eig", maxEig, "Calculate max eigenvalue");
+    app.add_option("--sequences", seqLength, "Calculate length of edge label sequences");
 
     CLI11_PARSE(app, argc, argv);
 
+    auto extension = path::utils::extractPath(inputPath, 0, false, false, true);
+
     try {
-        std::string extension = getFileExtension(configPath);
-
         if (extension == ".json") {
-            generateGraphFromJson(configPath);
-            return 0;
-        }
+            io::type::Config config;
+            if (!io::input::readConfigJson(inputPath, config)) {
+                io::utils::printErrorAndExit("Failed to load config.");
+            }
 
-        if (format != "edges" && format != "matrix") {
-            io::utils::printErrorAndExit(
-                "Invalid format specified. Use 'edges', 'matrix', or 'directory'.");
-        }
+            auto forbiddenNodes = io::input::genNodesFromConfig(config);
 
-        std::vector<std::string> csvFiles;
-        if (extension == ".csv") {
-            csvFiles.push_back(configPath);
-        } else if (extension.empty()) {
-            csvFiles = path::utils::getFiles(configPath, ".csv");
+            static const std::map<std::string,
+                                  std::function<std::unique_ptr<GraphGenerator>(const Config&)>>
+                generatorMap = {{"Beal",
+                                 [](const Config& config) {
+                                     return std::make_unique<Beal>(config.generation.alphabet,
+                                                                   config.generation.period);
+                                 }},
+                                {"DeBruijn", [](const Config& config) {
+                                     return std::make_unique<DeBruijn>(
+                                         config.generation.alphabet, config.generation.period,
+                                         config.generation.forbidden.length);
+                                 }}};
+
+            auto it = generatorMap.find(config.generation.algorithm);
+            if (it == generatorMap.end()) {
+                io::utils::printErrorAndExit("Unknown algorithm: " + config.generation.algorithm);
+            }
+
+            std::unique_ptr<GraphGenerator> generator = it->second(config);
+
+            for (const auto& forbiddenCombinations : forbiddenNodes) {
+                Graph graph = generator->generate(forbiddenCombinations);
+
+                if (config.generation.opt_mode == "sink_less") {
+                    graph = cleanGraph(graph);
+                } else if (config.generation.opt_mode == "minimize") {
+                    graph = cleanGraph(graph);
+                    graph = Moore::apply(graph);
+                }
+
+                path::Generator pathGenerator(config, forbiddenCombinations);
+
+                if (config.output.edge_list) {
+                    const std::string filePath = pathGenerator.genFilePath("edges", "csv");
+                    io::output::writeEdgesCsv(filePath, graph);
+                }
+                if (config.output.png_file) {
+                    const std::string filePath = pathGenerator.genFilePath("graph", "png");
+                    io::output::writePng(filePath, graph);
+                }
+            }
+        } else if (extension == ".csv" || extension.empty()) {
+            if (format != "edges" && format != "matrix") {
+                io::utils::printErrorAndExit(
+                    "Invalid format specified. Use 'edges' or 'matrix'.");
+            } else if (!maxEig && seqLength == 0 && !isMatrix && !pdf) {
+                io::utils::printErrorAndExit(
+                    "For CSV input, either --max-eig or --sequences must be specified.");
+            }
+
+            std::vector<std::string> csvFiles;
+            if (extension == ".csv") {
+                csvFiles.push_back(inputPath);
+            } else {
+                csvFiles = path::utils::getFiles(inputPath, ".csv");
+            }
+
             if (csvFiles.empty()) {
                 io::utils::printErrorAndExit("No CSV files found in the specified directory.");
             }
+
+            for (const auto& csvFile : csvFiles) {
+                Graph graph;
+                if (format == "edges") {
+                    if (!io::input::readEdgesCSV(csvFile, graph)) {
+                        continue;
+                    }
+                } else if (format == "matrix") {
+                    if (!io::input::readMatrixCSV(csvFile, graph)) {
+                        continue;
+                    }
+                }
+
+                std::string directory = path::utils::extractPath(csvFile, 2, true, false, false);
+                std::string fileName = path::utils::extractPath(csvFile, 0, false, true, false);
+
+                if (format != "matrix" && isMatrix) {
+                    std::string filePath = directory + "/matrix/" + fileName + ".csv";
+                    io::output::writeMatrixCsv(filePath, graph);
+                }
+
+                if (pdf) {
+                    std::string pdfPath = directory + "/graph/" + fileName + ".pdf";
+                    io::output::writePdf(pdfPath, graph);
+                }
+
+                if (maxEig) {
+                    std::cout << fileName << ": Max Eigenvalue = " << calculateMaxEigenvalue(graph)
+                              << std::endl;
+                }
+
+                if (seqLength > 0) {
+                    std::string filePath = directory + "/sequences/" + fileName + ".csv";
+                    io::output::writeSeqCsv(filePath, graph, seqLength);
+                }
+            }
         } else {
             io::utils::printErrorAndExit("Unsupported file extension: " + extension);
-        }
-
-        for (const auto& csvFile : csvFiles) {
-            Graph graph;
-            if (format == "edges") {
-                if (!io::input::readEdgesCSV(csvFile, graph)) {
-                    continue;
-                }
-            } else if (format == "matrix") {
-                if (!io::input::readMatrixCSV(csvFile, graph)) {
-                    continue;
-                }
-            }
-
-            if (sequencesLength > 0 && format == "edges") {
-                std::string directory = path::utils::extractPath(csvFile, 2, true, false, false);
-                std::string fileName = path::utils::extractPath(csvFile, 0, false, true, true);
-                std::string filePath = directory + "/sequences/" + fileName;
-                io::output::writeSeqCsv(filePath, graph, sequencesLength);
-            }
-
-            if (maxEigenvalue) {
-                std::cout << "Max Eigenvalue: " << calculateMaxEigenvalue(graph) << std::endl;
-            }
         }
     } catch (const std::exception& e) {
         io::utils::printErrorAndExit(e.what());

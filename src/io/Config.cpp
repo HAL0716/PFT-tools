@@ -7,54 +7,87 @@
 
 namespace io::type {
 
-void Config::validate() const {
-    if (mode == "custom") {
-        if (!forbidden_words.has_value()) {
-            throw std::invalid_argument("In 'custom' mode, 'forbidden_words' is required.");
+void Node::validate() const {
+    // TODO: ロジックを追加
+}
+
+void ForbiddenConfig::validate() const {
+    if (nodes.empty()) {
+        if (length == 0) {
+            throw std::invalid_argument("ForbiddenConfig length must be greater than 0.");
         }
-    } else if (mode == "all-patterns") {
-        if (!forbidden_word_length.has_value()) {
-            throw std::invalid_argument(
-                "In 'all-patterns' mode, 'forbidden_word_length' is required.");
-        }
-        if (!forbidden_per_position.has_value()) {
-            throw std::invalid_argument(
-                "In 'all-patterns' mode, 'forbidden_per_position' is required.");
+        if (position.empty()) {
+            throw std::invalid_argument("ForbiddenConfig position cannot be empty.");
         }
     } else {
-        throw std::invalid_argument("Invalid mode: " + mode);
+        for (const auto& node : nodes) {
+            node.validate();
+        }
     }
 }
 
-void Config::extendWords(std::vector<Word>& words, unsigned int targetLen,
-                         const std::string& alphabet) const {
-    std::vector<Word> extended;
+void GenericConfig::validate() const {
+    if (mode.empty()) {
+        throw std::invalid_argument("Mode cannot be empty.");
+    }
+    if (algorithm.empty()) {
+        throw std::invalid_argument("Algorithm cannot be empty.");
+    }
+    if (opt_mode.empty()) {
+        throw std::invalid_argument("Optimization mode cannot be empty.");
+    }
+    if (alphabet < 2) {
+        throw std::invalid_argument("Alphabet size must be at least 2.");
+    }
+    if (mode == "custom" && period == 0) {
+        throw std::invalid_argument("Period must be greater than 0.");
+    }
+    forbidden.validate();
+}
+
+void OutputConfig::validate() const {
+    if (output_dir.empty()) {
+        throw std::invalid_argument("Output directory cannot be empty.");
+    }
+    if (!edge_list && !png_file) {
+        throw std::invalid_argument(
+            "At least one output format (edge_list or png_file) must be enabled.");
+    }
+}
+
+void Config::validate() const {
+    generation.validate();
+    output.validate();
+}
+
+void GenericConfig::extendWords(std::vector<Node>& nodes, unsigned int targetLen,
+                                const std::string& alphabet) const {
+    std::vector<Node> extended;
     size_t reserve_size = 0;
-    for (const auto& word : words) {
-        reserve_size += (word.label.size() == targetLen) ? 1 : alphabet.size();
+    for (const auto& node : nodes) {
+        reserve_size += (node.label.size() == targetLen) ? 1 : alphabet.size();
     }
     extended.reserve(reserve_size);
 
-    for (auto& word : words) {
-        if (word.label.size() == targetLen) {
-            extended.push_back(std::move(word));
+    for (auto& node : nodes) {
+        if (node.label.size() == targetLen) {
+            extended.push_back(std::move(node));
         } else {
             for (char c : alphabet) {
-                extended.emplace_back(Word{word.label + c, word.phase});
+                extended.emplace_back(Node{node.label + c, node.phase});
             }
         }
     }
 
-    words = std::move(extended);
+    nodes = std::move(extended);
 }
 
-void Config::formatForDeBruijn() {
-    if (!forbidden_words.has_value()) {
-        throw std::invalid_argument("forbidden_words is not set.");
+void GenericConfig::formatForDeBruijn() {
+    if (forbidden.nodes.empty()) {
+        throw std::invalid_argument("forbidden.nodes is not set.");
     }
 
-    auto& words = *forbidden_words;
-    std::string alphabet = ALPHABET.substr(0, alphabet_size);
+    std::vector<Node> nodes(forbidden.nodes.begin(), forbidden.nodes.end());
 
     auto getMaxLength = [](const auto& ws) {
         return std::max_element(
@@ -70,50 +103,48 @@ void Config::formatForDeBruijn() {
             ->label.size();
     };
 
-    forbidden_word_length = getMaxLength(words);
+    forbidden.length = getMaxLength(nodes);
 
-    while (*forbidden_word_length != getMinLength(words)) {
-        extendWords(words, *forbidden_word_length, alphabet);
+    while (forbidden.length != getMinLength(nodes)) {
+        extendWords(nodes, forbidden.length, ALPHABET.substr(0, alphabet));
     }
+
+    forbidden.nodes = std::vector<Node>(nodes.begin(), nodes.end());
 }
 
 void from_json(const json& j, OutputConfig& o) {
-    j.at("formats").get_to(o.formats);
-    j.at("directory").get_to(o.directory);
+    j.at("edge_list").get_to(o.edge_list);
+    j.at("png_file").get_to(o.png_file);
+    j.at("output_dir").get_to(o.output_dir);
+}
+
+void from_json(const json& j, GenericConfig& g) {
+    j.at("mode").get_to(g.mode);
+    j.at("algorithm").get_to(g.algorithm);
+    j.at("opt_mode").get_to(g.opt_mode);
+    j.at("alphabet").get_to(g.alphabet);
+
+    if (j.contains("forbidden")) {
+        const auto& forbidden = j.at("forbidden");
+        if (forbidden.contains("nodes")) {
+            for (const auto& item : forbidden.at("nodes")) {
+                g.forbidden.nodes.emplace_back(item.at("word").get<std::string>(),
+                                               item.at("phase").get<unsigned int>());
+            }
+        }
+        if (forbidden.contains("length")) {
+            g.forbidden.length = forbidden.at("length").get<unsigned int>();
+        }
+        if (forbidden.contains("position")) {
+            g.forbidden.position = forbidden.at("position").get<std::vector<unsigned int>>();
+        }
+    }
+
+    g.period = j.contains("period") ? j.at("period").get<unsigned int>() : g.forbidden.position.size();
 }
 
 void from_json(const json& j, Config& c) {
-    j.at("mode").get_to(c.mode);
-    j.at("algorithm").get_to(c.algorithm);
-    j.at("sink_less").get_to(c.sink_less);
-    j.at("minimize").get_to(c.minimize);
-    j.at("alphabet_size").get_to(c.alphabet_size);
-    j.at("period").get_to(c.period);
-
-    if (j.contains("forbidden_word_length")) {
-        c.forbidden_word_length = j.at("forbidden_word_length").get<unsigned int>();
-    }
-    if (j.contains("forbidden_words")) {
-        auto isValidWord = [](const json& item) {
-            return item.is_array() && item.size() == WORD_LABEL_PHASE_PAIR_SIZE &&
-                   item[0].is_string() && item[1].is_number_unsigned();
-        };
-
-        std::vector<Word> processedWords;
-        for (const auto& item : j.at("forbidden_words")) {
-            if (!isValidWord(item)) {
-                throw std::invalid_argument(
-                    "Invalid format for forbidden_words. Each item must be an array of the form "
-                    "[string, unsigned int].");
-            }
-            processedWords.emplace_back(item[0].get<std::string>(), item[1].get<unsigned int>());
-        }
-        c.forbidden_words = std::move(processedWords);
-    }
-    if (j.contains("forbidden_per_position")) {
-        c.forbidden_per_position = j.at("forbidden_per_position").get<std::vector<unsigned int>>();
-    }
-
+    j.at("generation").get_to(c.generation);
     j.at("output").get_to(c.output);
 }
 
