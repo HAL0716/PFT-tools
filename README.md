@@ -12,26 +12,41 @@ PFT-tools は、PFT シフト空間のプレゼンテーションを生成、保
 
 以下はコマンドラインでの基本的な使い方です。
 
+### JSON 設定ファイルを使用したグラフ生成
+
 ```sh
 # JSON 設定ファイルからグラフを生成
-pft-tools --config <設定ファイル>.json
-
-# CSV ファイルから最大固有値を計算
-pft-tools --config <エッジリスト>.csv --format edges --max-eig
-pft-tools --config <隣接行列>.csv --format matrix --max-eig
-
-# ディレクトリ内すべての CSV ファイルから最大固有値を計算
-pft-tools --config <ディレクトリ名> --format matrix --max-eig
-
-# エッジラベルから生成可能な系列を指定長さで取得
-pft-tools --config <エッジリスト>.csv --format edges --sequences <長さ>
+pft-tools --input config/sample.json
 ```
 
-- `<設定ファイル>.json`: 生成用の `JSON` ファイル
-- `<エッジリスト>.csv`: エッジリスト形式の `CSV` ファイル
-- `<隣接行列>.csv`: 隣接行列形式の `CSV` ファイル
-- `<ディレクトリ名>`: 複数の `CSV` ファイルが入ったディレクトリ
-- `<長さ>`: 取得したい系列の長さ（正の整数）
+### CSV ファイルを使用した解析
+
+```sh
+# エッジリスト形式の CSV ファイルから最大固有値を計算
+pft-tools --input data/edges.csv --format edges --max-eig
+
+# 隣接行列形式の CSV ファイルから最大固有値を計算
+pft-tools --input data/matrix.csv --format matrix --max-eig
+
+# エッジリスト形式の CSV ファイルから指定長さの許可系列を取得
+pft-tools --input data/edges.csv --format edges --sequences 5
+
+# グラフを PDF 形式で保存
+pft-tools --input data/edges.csv --format edges --pdf
+
+# グラフを PNG 形式で保存
+pft-tools --input data/edges.csv --format edges --png
+```
+
+### ディレクトリ内の複数 CSV ファイルを一括処理
+
+```sh
+# ディレクトリ内のすべてのエッジリスト形式 CSV のファイルから最大固有値を計算
+pft-tools --input data/ --format edges --max-eig
+
+# ディレクトリ内のすべての隣接行列形式 CSV のファイルを PNG 形式で保存
+pft-tools --input data/ --format matrix --png
+```
 
 ---
 
