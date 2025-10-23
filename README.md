@@ -2,159 +2,128 @@
 
 ## 概要
 
-PFT-tools は、PFT シフト空間のプレゼンテーションを生成、保存、解析するための C++17 CLI ツールです。
+PFT-tools は、周期的禁止語によって定義されるシフト空間の生成、保存、解析を行うための C++17 CLI ツールです。
+このツールは、情報理論や符号理論における研究者やエンジニアを対象としており、以下の機能を提供します。
 
-**PFT**: 有限個の周期的禁止語で定義されるシフト空間 [Moision & Siegel, 2001]
+- **グラフ生成**: De Bruijn アルゴリズムや Béal アルゴリズムを使用
+- **データ保存**: CSV形式や画像形式 (PNG, PDF) での保存
+- **解析**: 最大固有値の算出や許可系列の抽出
 
 ---
 
-## CLI 使用例
+## 背景と目的
 
-以下はコマンドラインでの基本的な使い方です。
+周期的禁止語 (Periodic Forbidden Words) に基づくシフト空間は、符号理論や情報理論において重要な役割を果たします。本ツールは、これらのシフト空間を効率的に扱うためのツールとして設計されました。
+
+---
+
+## アーキテクチャ概要
+
+プロジェクトは以下のような構造を持っています。
+
+```plaintext
+├── src/
+│   ├── algorithm/       # アルゴリズム (Beal, DeBruijn, Moore)
+│   ├── core/            # 基本的なデータ構造 (Node, Edge, Graph)
+│   ├── io/              # 入出力処理 (JSON, CSV)
+│   ├── utils/           # ユーティリティ関数
+│   └── main.cpp         # エントリーポイント
+└── tests/               # Google Test によるユニットテスト
+```
+
+---
+
+## インストール
+
+### 必要なライブラリ
+
+- C++17 対応のコンパイラ (例: g++)
+- CMake 3.17 以上
+- Python 3 (オプション: dot2tex パッケージ)
+
+### セットアップ手順
+
+```sh
+# 必要なライブラリをインストール
+sudo apt-get install cmake g++ python3
+
+# リポジトリをクローン
+git clone https://github.com/haruki/PFT-tools.git
+cd PFT-tools
+
+# ビルド
+mkdir build && cd build
+cmake .. && cmake --build .
+```
+
+---
+
+## 使用例
 
 ### JSON 設定ファイルを使用したグラフ生成
 
 ```sh
 # JSON 設定ファイルからグラフを生成
-pft-tools --input config/sample.json
+./pft-tools --input config/sample.json --png
 ```
 
 ### CSV ファイルを使用した解析
 
 ```sh
 # エッジリスト形式の CSV ファイルから最大固有値を計算
-pft-tools --input data/edges.csv --format edges --max-eig
+./pft-tools --input data/edges.csv --format edges --max-eig
 
 # 隣接行列形式の CSV ファイルから最大固有値を計算
-pft-tools --input data/matrix.csv --format matrix --max-eig
+./pft-tools --input data/matrix.csv --format matrix --max-eig
 
 # エッジリスト形式の CSV ファイルから指定長さの許可系列を取得
-pft-tools --input data/edges.csv --format edges --sequences 5
+./pft-tools --input data/edges.csv --format edges --sequences 5
 
 # グラフを PDF 形式で保存
-pft-tools --input data/edges.csv --format edges --pdf
+./pft-tools --input data/edges.csv --format edges --pdf
 
 # グラフを PNG 形式で保存
-pft-tools --input data/edges.csv --format edges --png
+./pft-tools --input data/edges.csv --format edges --png
 ```
 
 ### ディレクトリ内の複数 CSV ファイルを一括処理
 
 ```sh
 # ディレクトリ内のすべてのエッジリスト形式 CSV のファイルから最大固有値を計算
-pft-tools --input data/ --format edges --max-eig
+./pft-tools --input data/ --format edges --max-eig
 
 # ディレクトリ内のすべての隣接行列形式 CSV のファイルを PNG 形式で保存
-pft-tools --input data/ --format matrix --png
+./pft-tools --input data/ --format matrix --png
 ```
 
 ---
 
-## 機能
+## テスト
 
-### 生成
+ユニットテストは Google Test を使用して記述されています。
 
-- De Bruijn アルゴリズム [de Bruijn, 1946]
-- Béal アルゴリズム [Béal et al., 2005]
-- オプションで以下を適用可能:
-  - 孤立頂点の削除
-  - 最小化
-
-### 保存
-
-- CSV: エッジリスト、隣接行列
-
-### 解析
-
-- 最大固有値の算出（Spectra 使用）
-
----
-
-## 入力 JSON（生成時の例）
-
-### Custom モード例
-
-```json
-{
-  "generation": {
-    "mode": "custom",
-    "algorithm": "Beal",     // "DeBruijn", "Beal"
-    "opt_mode": "none",      // "none"（通常）, "sink_less"（シンクレス）, "minimize"（最小化）
-    "alphabet": 2,           // シンボル数
-    "period": 3,             // 周期
-    "forbidden": {
-      "nodes": [             // 禁止語リスト
-        {
-          "word": "000",     // 禁止語
-          "phase": 0         // 位置
-        },
-        {
-          "word": "11",
-          "phase": 1
-        }
-      ]
-    }
-  },
-  "output": {
-    "edge_list": true,       // エッジリスト形式で出力
-    "png_file": false,       // PNG 形式で出力
-    "output_dir": "results"  // 出力ディレクトリ
-  }
-}
+```sh
+# テストの実行
+ctest
 ```
-
-### All-Patterns モード例
-
-```json
-{
-  "generation": {
-    "mode": "all-patterns",
-    "algorithm": "DeBruijn",
-    "opt_mode": "minimize",
-    "alphabet": 3,
-    "forbidden": {
-      "length": 3,               // 禁止語長
-      "position": [1, 0]           // 周期位置ごとの禁止語数
-    }
-  },
-  "output": {
-    "edge_list": true,       // エッジリスト形式で出力
-    "png_file": false,       // PNG 形式で出力
-    "output_dir": "results"  // 出力ディレクトリ
-  }
-}
-```
-
----
-
-## パラメータ範囲
-
-| パラメータ     | 範囲    |
-| -------------- | ------- |
-| Q (シンボル数) | 2–36    |
-| T (周期)       | 1–10    |
-| L (禁止語長)   | 1–10    |
-| N (禁止語数)   | 1–10    |
-| 最大ノード数   | T × Q^L |
 
 ---
 
 ## 依存ライブラリ
 
-- C++17
-- CMake
-- Eigen / Spectra
-- Google Test
+PFT-toolsは以下の主要なライブラリを使用しています。これらはCMakeを通じて自動的に取得されます。
+
+- **Google Test** (v1.17.0): ユニットテストフレームワーク
+- **nlohmann-json** (v3.12.0): JSONパーサー
+- **Eigen** (v5.0.0): 線形代数ライブラリ
+- **Spectra** (v1.2.0): 固有値計算ライブラリ
+- **CLI11** (v2.5.0): コマンドライン引数解析ライブラリ
 
 ---
 
-## ビルドと実行
+## ライセンス
 
-```sh
-mkdir build && cd build
-cmake .. && cmake --build .
-cd .. && ./build/pft-tools config/sample.json
-```
+このプロジェクトは [Unlicense](LICENSE) の下で公開されています。詳細は LICENSE ファイルを参照してください。
 
 ---
 
