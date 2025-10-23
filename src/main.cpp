@@ -82,7 +82,7 @@ void handleInputCSV(const CLI::Parser::ParsedOptions& options, const std::string
 
         io::utils::logMessage("Reading CSV: " + csvFile);
 
-        std::string directory = path::utils::extractPath(csvFile, 2, true, false, false);
+        std::string directory = path::utils::extractPath(csvFile, 1, true, false, false);
         std::string fileName = path::utils::extractPath(csvFile, 0, false, true, false);
 
         auto generateFilePath = [&](const std::string& type, const std::string& ext) {
