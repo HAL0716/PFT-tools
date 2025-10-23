@@ -31,9 +31,9 @@ void Parser::validate() {
         io::utils::printErrorAndExit("Invalid format specified. Use 'edges' or 'matrix'.");
     }
 
-    if (!options.maxEig && options.seqLength == 0 && !options.isMatrix && !options.pdf) {
+    if (!options.maxEig && options.seqLength == 0 && !options.isMatrix && !options.pdf && !options.png) {
         io::utils::printErrorAndExit(
-            "For CSV input, either --max-eig or --sequences must be specified.");
+            "No output option specified. Use at least one of --matrix, --pdf, --png, --max-eig, or --sequences.");
     }
 }
 
