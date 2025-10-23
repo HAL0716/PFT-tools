@@ -106,7 +106,7 @@ void handleInputCSV(const CLI::Parser::ParsedOptions& options, const std::string
         }
 
         auto writeSeqCsvWithLength = [&](const std::string& filePath, const Graph& graph) {
-            io::output::writeSeqCsv(filePath, graph, options.seqLength);
+            return io::output::writeSeqCsv(filePath, graph, options.seqLength);
         };
 
         if (options.seqLength > 0 &&
