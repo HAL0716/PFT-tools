@@ -60,61 +60,6 @@ cmake .. && cmake --build .
 ./pft-tools --input config/sample.json --png
 ```
 
-#### JSON設定ファイル例
-
-- Customモード
-
-```json
-{
-  "generation": {
-    "mode": "custom",
-    "algorithm": "Beal",
-    "opt_mode": "none",
-    "alphabet": 2,
-    "period": 3,
-    "forbidden": {
-      "nodes": [
-        {
-          "word": "000",
-          "phase": 0
-        },
-        {
-          "word": "11",
-          "phase": 1
-        }
-      ]
-    }
-  },
-  "output": {
-    "edge_list": true,
-    "png_file": false,
-    "output_dir": "results"
-  }
-}
-```
-
-- All-Patterns
-
-```json
-{
-  "generation": {
-    "mode": "all-patterns",
-    "algorithm": "DeBruijn",
-    "opt_mode": "minimize",
-    "alphabet": 3,
-    "forbidden": {
-      "length": 3,
-      "position": [1, 0]
-    }
-  },
-  "output": {
-    "edge_list": true,
-    "png_file": false,
-    "output_dir": "results"
-  }
-}
-```
-
 ### CSVファイルを使用した解析
 
 ```sh
@@ -143,25 +88,6 @@ cmake .. && cmake --build .
 # ディレクトリ内のすべての隣接行列形式CSVのファイルをPNG形式で保存
 ./pft-tools --input data/ --format matrix --png
 ```
-
----
-
-## テスト
-
-```sh
-# テストの実行
-ctest --output-on-failure
-```
-
----
-
-## 依存ライブラリ（CMake経由で取得）
-
-- **Google Test** (v1.17.0): ユニットテストフレームワーク
-- **nlohmann-json** (v3.12.0): JSONパーサー
-- **Eigen** (v5.0.0): 線形代数ライブラリ
-- **Spectra** (v1.2.0): 固有値計算ライブラリ
-- **CLI11** (v2.5.0): コマンドライン引数解析ライブラリ
 
 ---
 
@@ -247,6 +173,25 @@ ctest --output-on-failure
   }
 }
 ```
+
+---
+
+## テスト
+
+```sh
+# テストの実行
+ctest --output-on-failure
+```
+
+---
+
+## 依存ライブラリ（CMake経由で取得）
+
+- **Google Test** (v1.17.0): ユニットテストフレームワーク
+- **nlohmann-json** (v3.12.0): JSONパーサー
+- **Eigen** (v5.0.0): 線形代数ライブラリ
+- **Spectra** (v1.2.0): 固有値計算ライブラリ
+- **CLI11** (v2.5.0): コマンドライン引数解析ライブラリ
 
 ---
 
