@@ -82,7 +82,7 @@ void handleInputCSV(const CLI::Parser::ParsedOptions& options, const std::string
 
         io::utils::logMessage("Reading CSV: " + csvFile);
 
-        std::string directory = path::utils::extractPath(csvFile, 2, true, false, false);
+        std::string directory = path::utils::extractPath(csvFile, 1, true, false, false);
         std::string fileName = path::utils::extractPath(csvFile, 0, false, true, false);
 
         auto generateFilePath = [&](const std::string& type, const std::string& ext) {
@@ -100,8 +100,13 @@ void handleInputCSV(const CLI::Parser::ParsedOptions& options, const std::string
             io::utils::logMessage("Saved graph to PDF.");
         }
 
+        if (options.png &&
+            io::output::writeGraph("graph", "png", generateFilePath, io::output::writePng, graph)) {
+            io::utils::logMessage("Saved graph to PNG.");
+        }
+
         auto writeSeqCsvWithLength = [&](const std::string& filePath, const Graph& graph) {
-            io::output::writeSeqCsv(filePath, graph, options.seqLength);
+            return io::output::writeSeqCsv(filePath, graph, options.seqLength);
         };
 
         if (options.seqLength > 0 &&

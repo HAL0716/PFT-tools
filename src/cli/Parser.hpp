@@ -12,6 +12,7 @@ class Parser {
         std::string format;
         bool isMatrix = false;
         bool pdf = false;
+        bool png = false;
         bool maxEig = false;
         unsigned int seqLength = 0;
     };

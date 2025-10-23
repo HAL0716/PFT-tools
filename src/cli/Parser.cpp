@@ -12,6 +12,7 @@ Parser::Parser() {
     app.add_option("--format", options.format, "Input format: edges or matrix");
     app.add_flag("--matrix", options.isMatrix, "Generate adjacency matrix CSV files");
     app.add_flag("--pdf", options.pdf, "Generate PDF files");
+    app.add_flag("--png", options.png, "Generate PNG files");
     app.add_flag("--max-eig", options.maxEig, "Calculate max eigenvalue");
     app.add_option("--sequences", options.seqLength, "Calculate length of edge label sequences");
 }
@@ -30,9 +31,9 @@ void Parser::validate() {
         io::utils::printErrorAndExit("Invalid format specified. Use 'edges' or 'matrix'.");
     }
 
-    if (!options.maxEig && options.seqLength == 0 && !options.isMatrix && !options.pdf) {
+    if (!options.maxEig && options.seqLength == 0 && !options.isMatrix && !options.pdf && !options.png) {
         io::utils::printErrorAndExit(
-            "For CSV input, either --max-eig or --sequences must be specified.");
+            "No output option specified. Use at least one of --matrix, --pdf, --png, --max-eig, or --sequences.");
     }
 }
 
