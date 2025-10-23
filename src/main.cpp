@@ -100,6 +100,11 @@ void handleInputCSV(const CLI::Parser::ParsedOptions& options, const std::string
             io::utils::logMessage("Saved graph to PDF.");
         }
 
+        if (options.png &&
+            io::output::writeGraph("graph", "png", generateFilePath, io::output::writePng, graph)) {
+            io::utils::logMessage("Saved graph to PNG.");
+        }
+
         auto writeSeqCsvWithLength = [&](const std::string& filePath, const Graph& graph) {
             io::output::writeSeqCsv(filePath, graph, options.seqLength);
         };
